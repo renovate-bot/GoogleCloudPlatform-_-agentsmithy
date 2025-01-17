@@ -1,0 +1,348 @@
+<div class="root-container">
+  <div class="max-width-container">
+    <div><button mat-button class="back-button" (click)="routeToHome()">Back</button></div>
+    <div>
+      <div class="title">Configure your Agent</div>
+      <div class="stepper-container">
+        <div class="stepper-section">
+          <div class="sub-title"> Steps to create quick bot</div>
+          <mat-stepper orientation="vertical" #stepper class="side-stepper" linear
+          (click)="checkChangesAndRefetchScript();"
+          >
+            <mat-step [stepControl]="projectForm">
+                <ng-template matStepLabel class="header">Configure Bot</ng-template>
+            </mat-step>
+            <mat-step [stepControl]="projectForm">
+                <ng-template matStepLabel class="header">Cost & Effort Estimation</ng-template>
+            </mat-step>
+            <mat-step [stepControl]="projectForm">
+              <ng-template matStepLabel class="header">Launch Bot</ng-template>
+            </mat-step>
+          </mat-stepper>
+        </div>
+        <div class="stepper-content-section">
+          <div *ngIf="this.stepper!.selectedIndex == 0" class="content-section">
+            <form [formGroup]="projectForm">
+              <span class="content-title"> Chatbot details</span>
+              <mat-form-field appearance="outline" [floatLabel]="'always'">
+                <mat-label>Chatbot name</mat-label>
+                <input matInput placeholder="Enter the name of your chatbot"
+                  [formControlName]="projectFormKeys.CHATBOT_NAME">
+                <mat-error *ngIf="projectForm.get(projectFormKeys.CHATBOT_NAME)?.hasError('required')"
+                  class="error-message">
+                  Please enter the chatbot's name
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" [floatLabel]="'always'">
+                <mat-select placeholder="Select a template" [formControlName]="projectFormKeys.CHATBOT_TEMPLATE">
+                  <mat-option *ngFor="let template of templateList" value="{{template.name}}">{{template.displayName}}</mat-option>
+                </mat-select>
+                <mat-label>Chatbot template</mat-label>
+                <mat-error *ngIf="projectForm.get(projectFormKeys.CHATBOT_TEMPLATE)?.hasError('required')" class="error-message">
+                  Please select a template.
+                </mat-error>
+              </mat-form-field>
+              <span class="content-title"> Project Configuration</span>
+              <mat-form-field appearance="outline" [floatLabel]="'always'">
+                <mat-label>Google Cloud Project ID</mat-label>
+                <input matInput placeholder="Enter a Google Cloud Project ID "
+                  [formControlName]="projectFormKeys.PROJECT_ID">
+                <button mat-button (click)="this.openGCPIdTutorial()" matSuffix class="my-icon">How to get my GCP
+                  Project ID</button>
+                <mat-error *ngIf="projectForm.get(projectFormKeys.PROJECT_ID)?.hasError('required')"
+                  class="error-message">
+                  Please enter a Google Cloud Project ID
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" [floatLabel]="'always'">
+                <mat-select placeholder="Select region" [formControlName]="projectFormKeys.REGION">
+                  <mat-option *ngFor="let region of regionList" value="{{region}}">{{region}}</mat-option>
+                </mat-select>
+                <mat-label>Region</mat-label>
+                <mat-error *ngIf="projectForm.get(projectFormKeys.REGION)?.hasError('required')" class="error-message">
+                  Please select a region.
+                </mat-error>
+              </mat-form-field>
+
+              <mat-checkbox
+              [checked]="addFirebaseConfig"
+              (change)="updateForm()"
+            > Add Firebase authentication
+            </mat-checkbox>
+
+              <div class="firebase-container" *ngIf="addFirebaseConfig">
+                <span class="content-title"> Firebase Configuration</span>
+                <button mat-button (click)="this.openFirebaseTutorial()" matSuffix class="my-icon"
+                  matTooltip="Firebase Auth Domain is generated when a firebase app is created.">How to create my
+                  Firebase App</button>
+              </div>
+              <mat-form-field appearance="outline" [floatLabel]="'always'"  *ngIf="addFirebaseConfig">
+                <mat-label>Firebase Project ID</mat-label>
+                <input matInput placeholder="Enter a Firebase Project ID"
+                  [formControlName]="projectFormKeys.FIREBASE_PROJECT_ID">
+                <button mat-button (click)="this.openFirebaseConfiguration()" matSuffix class="my-icon"
+                  matTooltip="Firebase Project ID is generated when a firebase app is created.">Where is my Firebase
+                  Project ID</button>
+                <mat-error *ngIf="projectForm.get(projectFormKeys.FIREBASE_PROJECT_ID)?.hasError('required')"
+                  class="error-message">
+                  Please enter a Firebase Project ID
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" [floatLabel]="'always'"  *ngIf="addFirebaseConfig">
+                <mat-label>Firebase API Key</mat-label>
+                <input matInput placeholder="Enter a Firebase API key"
+                  [formControlName]="projectFormKeys.FIREBASE_API_KEY">
+                <button mat-button (click)="this.openFirebaseConfiguration()" matSuffix class="my-icon"
+                  matTooltip="Firebase API key is generated when a firebase app is created.">Where is my Firebase API
+                  KEY</button>
+                <mat-error *ngIf="projectForm.get(projectFormKeys.FIREBASE_API_KEY)?.hasError('required')"
+                  class="error-message">
+                  Please enter a Firebase API key
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" [floatLabel]="'always'"  *ngIf="addFirebaseConfig">
+                <mat-label>Firebase Auth Domain</mat-label>
+                <input matInput placeholder="Enter a Firebase Auth Domain"
+                  [formControlName]="projectFormKeys.FIREBASE_AUTH_DOMAIN">
+                <button mat-button (click)="this.openFirebaseConfiguration()" matSuffix class="my-icon"
+                  matTooltip="Firebase Auth Domain is generated when a firebase app is created.">Where is my Firebase
+                  Auth Domain</button>
+                <mat-error *ngIf="projectForm.get(projectFormKeys.FIREBASE_AUTH_DOMAIN)?.hasError('required')"
+                  class="error-message">
+                  Please enter a Firebase Auth Domain
+                </mat-error>
+              </mat-form-field>
+              <div class="button-container">
+                <button mat-flat-button (click)="stepper.next();" class="stepper-button"
+                  [ngClass]="projectForm.invalid ? 'disable-button': 'enabled-button'"
+                  [disabled]="projectForm.invalid">Next</button>
+              </div>
+            </form>
+          </div>
+          <div *ngIf="this.stepper!.selectedIndex == 1" class="content-section">
+            <span class="content-title"> Task Breakdown & Time Estimates</span>
+            <div class="step-2-content">
+              <div class="row">
+                <div class="step-parent-container">
+                  <div class="step-container step-container-blue">
+                    <div class="heading">
+                      <mat-icon>admin_panel_settings</mat-icon>
+                      Admin App
+                    </div>
+                    <div class="step-container-child blue">Configure</div>
+                    <div class="step-container-child blue">Download</div>
+                  </div>
+                  <div class="timer blue-border">
+                    <mat-icon>schedule_outline</mat-icon>
+                    5 mins
+                  </div>
+                </div>
+
+                <div class="step-parent-container">
+                  <div class="step-container step-container-yellow">
+                    <div class="heading">
+                      <mat-icon>encrypted</mat-icon>
+                      Private Project
+                    </div>
+                    <div class="step-container-child yellow">Deploy</div>
+                    <div class="step-container-child yellow">Launch</div>
+                  </div>
+                  <div class="timer yellow-border">
+                    <mat-icon>schedule_outline</mat-icon>
+                    30 mins
+                  </div>
+                </div>
+
+                <div class="step-parent-container">
+                  <div class="step-container step-container-green">
+                    <div class="heading">
+                      <mat-icon>robot_2</mat-icon>
+                      Quick Bot Instance
+                    </div>
+                    <div class="step-container-child green">Intent 1</div>
+                    <div class="step-container-child green">Intent 2</div>
+                  </div>
+                  <div class="timer green-border">
+                    <mat-icon>schedule_outline</mat-icon>
+                    30 mins
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="estimate">
+                  <div class="estimate-label">
+                    <mat-icon>schedule_outline</mat-icon>
+                    Total time to launch a live working Bot instance trained on your data
+                  </div>
+                  <div class="estimate-value">
+                    ~1 Hour
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="step-2-content">
+              <div class="row">
+                <div class="step-parent-container">
+                  <div class="step-container step-container-blue cost-container-height">
+                    <div class="step-container-child blue">Cloud Build
+                      <div class="sub-text">Build Docker Images</div>
+                    </div>
+                    <div class="step-container-child blue">Artifact Registry
+                      <div class="sub-text">Store Docker Images</div>
+                    </div>
+                  </div>
+                  <div class="timer blue-border">
+                    Free
+                  </div>
+                </div>
+
+                <div class="step-parent-container">
+                  <div class="step-container step-container-red cost-container-height">
+                    <div class="step-container-child red">Cloud Run
+                      <div class="sub-text">Frontend</div>
+                    </div>
+                    <div class="step-container-child red">Cloud Run
+                      <div class="sub-text">Backend</div>
+                    </div>
+                  </div>
+                  <div class="timer red-border">
+                    Free
+                  </div>
+                </div>
+
+                <div class="step-parent-container">
+                  <div class="step-container step-container-yellow cost-container-height">
+                    <div class="step-container-child yellow">Cloud Storage
+                      <div class="sub-text">Storing source data & embedding</div>
+                    </div>
+                    <div class="step-container-child yellow">BigQuery
+                      <div class="sub-text">Table Creation & Default Intents</div>
+                    </div>
+                  </div>
+                  <div class="timer yellow-border">
+                    Free
+                  </div>
+                </div>
+
+                <div class="step-parent-container">
+                  <div class="step-container step-container-green cost-container-height">
+                    <div class="step-container-child green">Vertex AI
+                      <div class="sub-text">Creation of default intent endpoints</div>
+                    </div>
+                    <div class="step-container-child green">Generative AI
+                      <div class="sub-text">Generating Embeddings for documents</div>
+                    </div>
+                  </div>
+                  <div class="timer green-border">
+                    $0.000759 + $0.0002758
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="estimate">
+                  <div class="estimate-label">
+                    <mat-icon>paid</mat-icon>
+                    Total cost to launch a live working Bot instance trained on your data
+                  </div>
+                  <div class="estimate-value">
+                    ~ $0.001 USD
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="button-container">
+              <button mat-flat-button (click)="stepper.previous();" class="stepper-button back-button"
+                [disabled]="projectForm.invalid">Back</button>
+              <button mat-flat-button (click)="onSubmit(); stepper.next();" class="stepper-button"
+                [disabled]="projectForm.invalid">Next</button>
+            </div>
+          </div>
+          <div *ngIf="this.stepper!.selectedIndex == 2" class="content-section">
+            <div class="completed-steps">
+              <div class="right-container">
+                <div class="final-step-container">
+                  <div class="number-container">
+                    <button mat-mini-fab class="complete-button">1</button>
+                    <span class="step-name">Setup your environment</span>
+                  </div>
+                  <div class="message-container">
+                    <div class="bot-message">
+                      <div class="bot-message-wrapping-container" style="padding: 1rem;">
+                        <div>Download the provided script and execute it in your <a
+                            href="https://console.cloud.google.com/welcome?cloudshell=true" target="_blank">Google Cloud
+                            Console</a>.This script will automatically prepare the necessary cloud infrastructure for your bot.
+                          <br><b> Note: You need to have owner/editor role in your GCP project.
+                             Some of the infrastructure needed to deploy quick bot application may be restricted by org policy constraints. Please check the User Guide for more details.</b></div>
+                        <div class="tutorial_resource"><a
+                            href="https://screencast.googleplex.com/cast/NDc1MzIwNjg2NDI0ODgzMnxlMmM5MzczMi1mYQ"
+                            target="_blank">Video tutorial</a>
+                        </div>
+                        <div class="tutorial_resource"><a
+                          href="https://docs.google.com/document/d/1h3geVdaUiBs-vqMpUKwZoCy5Glk5aPTnvEmBIoadhcI/edit?resourcekey=0-ogZHce8MmJHdWTFlXyTmSA&tab=t.0#heading=h.vw8g2ewzafrg"
+                          target="_blank">User Guide</a>
+                      </div>
+                      </div>
+                      <span class="generating-text">Estimated Time : 30 mins </span>
+                    </div>
+                    <div class="button-container">
+                      <button mat-flat-button (click)="downloadFile()"
+                        class="stepper-button enabled-button complete-button-width">Download Script</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="down-arrow">
+                  <mat-icon>arrow_downward</mat-icon>
+                </div>
+                <div class="final-step-container">
+                  <div class="number-container">
+                    <button mat-mini-fab class="complete-button">2</button>
+                    <span class="step-name">Manual configuration</span>
+                  </div>
+                  <div class="message-container">
+                    <div class="bot-message">
+                      <div class="bot-message-wrapping-container" style="padding: 1rem;">
+                        <div>Visit the <a href="https://console.firebase.google.com/" target="_blank">Firebase console</a>.
+                          Create a default firestore Database and also activate authentication with Google. Finally add your
+                          frontend's domain to the authorized domain's list</div>
+                        <div class="tutorial_resource"><a
+                            href="https://screencast.googleplex.com/cast/NTA1MzE0ODk5MjM3MjczNnwxMmM1ZDE2Ny01OQ"
+                            target="_blank">Video tutorial</a></div>
+                      </div>
+                      <span class="generating-text">Estimated Time : 2 mins </span>
+                    </div>
+                    <div class="button-container">
+                    </div>
+                  </div>
+                </div>
+                <div class="down-arrow">
+                  <mat-icon>arrow_downward</mat-icon>
+                </div>
+                <div class="final-step-container">
+                  <div class="number-container">
+                    <button mat-mini-fab class="complete-button">3</button>
+                    <span class="step-name">Have fun!</span>
+                  </div>
+                  <div class="message-container">
+                    <div class="bot-message">
+                      <div class="bot-message-wrapping-container" style="padding: 1rem;"> You are all setup! Start interacting
+                        with the newly created chatbot and explore its diverse features.
+                      </div>
+                      <span class="generating-text">Estimated Time : Eternal joy </span>
+                    </div>
+                    <div class="button-container">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="button-container">
+              <button mat-flat-button (click)="stepper.previous();" class="stepper-button back-button">Back</button>
+              <button routerLink="/" mat-flat-button
+              class="stepper-button green-enabled-button">Finish setup!</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
