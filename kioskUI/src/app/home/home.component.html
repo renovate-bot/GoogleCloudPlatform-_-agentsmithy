@@ -1,0 +1,63 @@
+<div class="root-container">
+    <!-- <div class="width-container"> -->
+        <div class="container">
+            <div class="image-container">
+                <img class="cat-image" src="assets/images/landing-page-image-1.svg">
+                <img class="people-image" src="assets/images/landing-page-image-2.svg">
+            </div>
+            <div class="title-container">
+                <div class="title-text-container">
+                    <span class="title"> Create your own <span class="logo-text"><span class="gradient-text">Quick Bot</span></span>
+                </span>
+                </div>
+                <div class="title-button-container">
+                    <button mat-flat-button (click)="routeToCreateBot()">
+                        <mat-icon class="add">add_circle_outline</mat-icon>
+                        Create Agent</button>
+                </div>
+            </div>
+        </div>
+        <div class="template-container">
+            <div class="template-section">
+                <div class="template-heading">Templates</div>
+                <div class="templates">
+                    <!-- <div class="new-template-container" (click)="routeToCreateBot()">
+                        <img src="assets/images/new-template.svg">
+                        <div class="template-context">Create Bot</div>
+                    </div> -->
+                    <div class="new-template-container" (click)="routeToCreateBot(templates.get('SINGLE_PLAYBOOK').name)">
+                        <img src="assets/images/quickbot-template-2-new.png">
+                        <div class="bottom-center">Conversation App - Single playbook</div>
+                        <div class="template-context"><mat-icon>remove_red_eye</mat-icon>
+                            Use Template</div>
+                    </div>
+                    <div class="new-template-container" (click)="routeToCreateBot(templates.get('MULTIPLE_PLAYBOOK').name)">
+                        <img src="assets/images/template-1.png">
+                        <div class="bottom-center">Conversational App - Multiple playbooks</div>
+                        <div class="template-context"><mat-icon>remove_red_eye</mat-icon>
+                            Use Template</div>
+                    </div>
+                    <div class="new-template-container" (click)="routeToCreateBot(templates.get('AGENT_BUILDER_SEARCH').name)">
+                        <img src="assets/images/search-agent-builder-template.png">
+                        <div class="bottom-center">Website Search using Agent Builder</div>
+                        <div class="template-context"><mat-icon>remove_red_eye</mat-icon>
+                            Use Template</div>
+                    </div>
+
+                    <div class="new-template-container" (click)="routeToCreateBot(templates.get('AGENT_BUILDER_DOCUMENT_SEARCH').name)">
+                        <img src="assets/images/template-4.png">
+                        <div class="bottom-center">Document Search using Agent Builder</div>
+                        <div class="template-context"><mat-icon>remove_red_eye</mat-icon>
+                            Use Template</div>
+                    </div>
+                    <!-- <div class="disable-container">
+                        <img src="assets/images/template-2.png">
+                        <div class="bottom-center">Chat plus search</div>
+                        <div class="template-context"><mat-icon>access_time</mat-icon>
+                            Coming Soon</div>
+                    </div> -->
+                </div>
+            </div>
+        </div>
+    <!-- </div> -->
+</div>
