@@ -1,0 +1,116 @@
+.root-container {
+    display: grid;
+    max-width: 1280px;
+    margin: 10px auto;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px auto;
+    row-gap: 80%;
+}
+
+.left-container {
+    width: 60%;
+}
+
+.image-container {
+    .logo-image {
+        padding-bottom: 3%;
+        background-image: url('./../../../../public/assets/images/logo.gif');
+        background-size: cover;
+        background-repeat: no-repeat;
+        height: 18.75rem;
+        width: 100%;
+    }
+}
+
+.header-container h3 {
+    color: #000000;
+    font-weight: 400;
+    font-size: 2rem;
+    line-height: 1.5rem;
+    margin-bottom: 10%;
+}
+
+.text-container {
+    color: #000000;
+    font-weight: 400;
+    font-size: 1.375rem;
+    line-height: 1.75rem;
+    margin-bottom: 1%;
+}
+
+.buttons-container {
+    width: 100%;
+    grid-column: 2 / span 2;
+}
+
+.buttons {
+    display: flex;
+}
+
+.buttons button {
+    font-family: 'Google Sans';
+    font-size: 1.2rem;
+    padding: 1.2rem 1.2rem;
+    border-radius: 100px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    word-break: break-word;
+}
+
+@media (max-width: 768px) {
+    .buttons button {
+        width: 80%;
+        margin-bottom: 1rem;
+    }
+}
+
+.explore-btn {
+    background-color: #0B57D0;
+    border-color: #FFFFFF;
+    color: white;
+    margin: 0 1rem;
+    border-width: 0;
+}
+
+.explore-btn .add {
+    margin: 0 .5rem 0 0;
+}
+
+.configure-btn {
+    background-color: #0B57D0;
+    color: white;
+    border-color: #FFFFFF;
+    border-width: 0;
+}
+
+.configure-btn .add {
+    margin: 0 .5rem 0 0;
+}
+
+@media (max-width: 1000px) {
+    .root-container {
+        row-gap: 20%;
+    }
+}
+
+@media (max-width: 1000px) {
+    .buttons {
+        flex-direction: column;
+        align-items: start;
+    }
+}
+
+
+@media (max-width: 1000px) {
+    .configure-btn {
+        margin: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .explore-btn {
+        margin: 0;
+    }
+}
