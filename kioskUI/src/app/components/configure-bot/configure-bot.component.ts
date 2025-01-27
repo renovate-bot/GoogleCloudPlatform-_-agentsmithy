@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Validators, FormBuilder, FormArray, FormGroup, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-configure-bot',
@@ -15,11 +16,12 @@ export class ConfigureBotComponent {
   selectedModel: string = 'gemini';
 
 
-  constructor(private _formBuilder: FormBuilder, private router: Router, private fb: FormBuilder) { 
+  constructor(private _formBuilder: FormBuilder, private router: Router, private fb: FormBuilder, private themeService: ThemeService) { 
     this.formGroup = this.fb.group({
       formArray: this.fb.array([
         this.fb.group({
           agentName: [''],
+          description: [''],
           agentType: [''],
           industry: ['']
         }),
@@ -34,9 +36,11 @@ export class ConfigureBotComponent {
   stepperConfig = [
     {
       heading: 'Agent Properties',
+      stepHeading: 'Properties',
       contentType: 'form',
       fields: [
         { label: 'Agent Name', type: 'input', controlName: 'agentName', placeholder: '', required: true },
+        { label: 'Description', type: 'input', controlName: 'description', placeholder: '', required: true },
         { label: 'Agent Type', type: 'select', controlName: 'agentType', options: [
           { value: 'option1', label: 'Option 1' },
           { value: 'option2', label: 'Option 2', disabled: true },
@@ -50,11 +54,11 @@ export class ConfigureBotComponent {
       ],
       hasNext: true,
       hasPrevious: false,
-      hasHome: true,
-      onHomeClick: () => this.goToHome()
+      hasHome: true
     },
     {
-      heading: 'Run Time',
+      heading: 'Runtime',
+      stepHeading: 'Runtime',
       contentType: 'options',
       options: [
         { 
@@ -78,11 +82,11 @@ export class ConfigureBotComponent {
       },
       hasNext: true,
       hasPrevious: true,
-      hasHome: true,
-      onHomeClick: () => this.goToHome()
+      hasHome: true
     },
     {
       heading: 'Orchestration Framework',
+      stepHeading: 'Framework',
       contentType: 'options',
       options: [
         { 
@@ -113,12 +117,12 @@ export class ConfigureBotComponent {
       },
       hasNext: true,
       hasPrevious: true,
-      hasHome: true,
-      onHomeClick: () => this.goToHome()
+      hasHome: true
     },
 
     {
       heading: 'Tools',
+      stepHeading: 'Tools',
       contentType: 'options',
       options: [
         { 
@@ -149,24 +153,24 @@ export class ConfigureBotComponent {
       },
       hasNext: true,
       hasPrevious: true,
-      hasHome: true,
-      onHomeClick: () => this.goToHome()
+      hasHome: true
     },
     {
       heading: 'Model',
+      stepHeading: 'Model',
       contentType: 'options',
       options: [
         { 
           label: 'Gemini', 
           isSelected: true, 
-          onClick: () => this.selectRunTime('Gemini'), 
+          onClick: () => this.selectModel('Gemini'), 
           subtitle: 'Gemini is a family of large language models (LLMs) from Google AI, capable of text generation, code generation, translation, and question answering.',
           caption: 'from langchain.llms import Gemini \n\nllm = Gemini(model="gemini-pro") \nresponse = llm("Tell me a joke.") \nprint(response)'
         },
         { 
           label: 'Claude (Model Garden)', 
           isSelected: false, 
-          onClick: () => this.selectRunTime('Claude (Model Garden)'),
+          onClick: () => this.selectModel('Claude (Model Garden)'),
           subtitle: 'Claude is a large language model created by Anthropic, focused on being helpful, harmless, and honest. You can use Claude for tasks like summarizing articles or documents, engaging in natural-sounding conversations, generating different kinds of text formats, and providing informative answers to your questions.',
           caption: 'import anthropic \n\nclient = anthropic.Anthropic() \nresponse = client.completions.create( \n\tmodel="claude-2", \n\tprompt="Write a short poem about the ocean." \n) \nprint(response.completion)' 
         }
@@ -178,26 +182,8 @@ export class ConfigureBotComponent {
       hasNext: false,
       hasPrevious: true,
       hasHome: true,
-      hasSubmit: true,
-      onHomeClick: () => this.goToHome()
-    },
-    // {
-    //   heading: '',
-    //   contentType: 'spinner',
-    //   hasNext: false,
-    //   hasPrevious: false,
-    //   hasHome: false,
-    //   onHomeClick: () => this.goToHome()
-    // },
-    // {
-    //   heading: 'QR Code',
-    //   contentType: 'qr_code',
-    //   hasExport: true,
-    //   hasReset: true,
-    //   hasHome: false,
-    //   onHomeClick: () => this.goToHome()
-    // }
-    
+      hasSubmit: true
+    }
   ];
 
   ngOnInit() {
@@ -205,6 +191,7 @@ export class ConfigureBotComponent {
       formArray: this._formBuilder.array([
         this._formBuilder.group({
           agentName: ['', Validators.required],
+          description: ['', Validators.required],
           agentType: ['', Validators.required],
           industry: ['', Validators.required],
         }),
@@ -246,5 +233,29 @@ export class ConfigureBotComponent {
 
   goToHome() {
     this.router.navigate(['/']);
+  }
+
+  onRadioChange(section: any, selectedOption: any) {
+    section.options.forEach((option: { isSelected: boolean; }) => {
+      option.isSelected = option === selectedOption; 
+    });
+    section.selectedOptionResponse = {
+      subtitle : selectedOption.subtitle,
+      caption: selectedOption.caption
+    }
+    selectedOption.onClick(); 
+  }
+
+  goToSpinnerComponent() {
+    this.submitForm();
+    this.router.navigate(['/spinner']);
+  }
+
+  submitForm() {
+    console.log(this.formGroup.value);
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 }

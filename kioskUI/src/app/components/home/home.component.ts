@@ -2,6 +2,7 @@ import { Component, OnInit, SecurityContext } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-home',
@@ -10,7 +11,7 @@ import { Router } from '@angular/router';
 })
 export class HomeComponent {
 
-constructor(public router: Router, private domSanitizer: DomSanitizer, private matIconRegistry: MatIconRegistry) { 
+constructor(public router: Router, private domSanitizer: DomSanitizer, private matIconRegistry: MatIconRegistry, private themeService: ThemeService) { 
 
   this.matIconRegistry.addSvgIcon(
     'spark',
@@ -18,8 +19,18 @@ constructor(public router: Router, private domSanitizer: DomSanitizer, private m
   );
 
   this.matIconRegistry.addSvgIcon(
+    'spark-dark',
+    this.domSanitizer.bypassSecurityTrustResourceUrl('assets/images/spark-dark.svg')
+  );
+
+  this.matIconRegistry.addSvgIcon(
     'spark-shine',
     this.domSanitizer.bypassSecurityTrustResourceUrl('assets/images/spark-shine.svg')
+  );
+
+  this.matIconRegistry.addSvgIcon(
+    'spark-shine-dark',
+    this.domSanitizer.bypassSecurityTrustResourceUrl('assets/images/spark-shine-dark.svg')
   );
 
 }
@@ -36,5 +47,13 @@ constructor(public router: Router, private domSanitizer: DomSanitizer, private m
       this.router.navigate(["predefined-bot/" + templateId]);
     else
       this.router.navigate(["predefined-bot"])
+  }
+
+  get isDarkTheme(): boolean {
+    return this.themeService.getIsDarkTheme();
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 }

@@ -20,17 +20,12 @@ import {MatStepperModule} from '@angular/material/stepper';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
-import { ToastMessageComponent } from './common/components/toast-message/toast-message.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { CreateBotComponent } from './components/create-bot/create-bot.component';
 import { HomeComponent } from './components/home/home.component';
 import { PredefinedBotComponent } from './components/predefined-bot/predefined-bot.component';
 import { FooterComponent } from './components/footer/footer.component';
-import { CustomStepperComponent } from './components/custom-stepper/custom-stepper.component';
-import { StepperCompComponent } from './components/stepper-comp/stepper-comp.component';
 import { MatRadioModule } from '@angular/material/radio';
-import { FormStepperComponent } from './components/form-stepper/form-stepper.component';
 import { ConfigureBotComponent } from './components/configure-bot/configure-bot.component';
 import { SpinnerComponent } from './components/spinner/spinner.component';
 import { ExportComponent } from './components/export/export.component';
@@ -38,14 +33,9 @@ import { ExportComponent } from './components/export/export.component';
 @NgModule({
   declarations: [
     AppComponent,
-    ToastMessageComponent,
-    CreateBotComponent,
     HomeComponent,
     PredefinedBotComponent,
     FooterComponent,
-    CustomStepperComponent,
-    StepperCompComponent,
-    FormStepperComponent,
     ConfigureBotComponent,
     SpinnerComponent,
     ExportComponent

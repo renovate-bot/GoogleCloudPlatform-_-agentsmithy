@@ -5,15 +5,26 @@
     <div class="header-container">
         <h3>Get started with Agents.</h3>
         <p class="text-container">
-            Placerat morbi varius interdum adipiscing semper facilisis maecenas viverra tellus. Amet pellentesque a viverra ultrices urna. Massa semper pulvinar sem volutpat quis enim in est. Elementum ac tortor consequat vel id cursus. Ac id in tortor gravida facilisi nibh. Condimentum vulputate ligula imperdiet non commodo diam. Mauris at aliquam enim nunc mi arcu.
-Nunc amet et vitae sapien eget non. 
+            The AI Agent Builder simplifies the process of creating and experimenting with AI agents. Users can easily
+            select their preferred runtime, orchestration framework, tools, and model, or choose from pre-configured
+            agents. This tool makes it easy for both experienced developers and those new to AI to explore and implement
+            AI agent solutions.
         </p>
     </div>
-        <div class="buttons-container">
-            <div class="buttons">
-                <button class="explore-btn" (click)="routeToCreateBot()"><mat-icon class="add" svgIcon="spark"></mat-icon> Build an agent</button>
-                <button class="configure-btn" (click)="routeToPrebuiltBot()"><mat-icon class="add" svgIcon="spark-shine"></mat-icon> Explore pre-built agents</button>
-              </div>
-        </div>
+    <div class="left-footer">
+        <button class="contrast" mat-fab (click)="toggleTheme()">
+            <mat-icon>contrast</mat-icon>
+        </button>
+    </div>
+    <div class="right-footer">
+        <div class="button-container">
+            <button class="spark" mat-fab extended (click)="routeToCreateBot()">
+              <mat-icon [svgIcon]="isDarkTheme ? 'spark-dark' : 'spark'"></mat-icon>
+              Build an agent
+            </button>
+            <button mat-fab extended class="spark-shine" (click)="routeToPrebuiltBot()">
+              <mat-icon [svgIcon]="isDarkTheme ? 'spark-shine-dark' : 'spark-shine'"></mat-icon>
+              Explore pre-built agents
+            </button>
+    </div>
 </div>
-
