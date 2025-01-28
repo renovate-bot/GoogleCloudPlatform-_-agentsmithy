@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Validators, FormBuilder, FormArray, FormGroup, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
+import { MatDialog } from '@angular/material/dialog';
+import { CodeDialogComponent } from '../code-dialog/code-dialog.component';
 
 @Component({
   selector: 'app-configure-bot',
@@ -14,6 +16,16 @@ export class ConfigureBotComponent {
   selectedFramework: string = 'langchain';
   selectedTools: string = 'api';
   selectedModel: string = 'gemini';
+
+  dialog = inject(MatDialog);
+
+  openDialog(codeExample: any) {
+    this.dialog.open(CodeDialogComponent, {
+      data: {
+        code: codeExample,
+      },
+    });
+  }
 
 
   constructor(private _formBuilder: FormBuilder, private router: Router, private fb: FormBuilder, private themeService: ThemeService) { 
@@ -54,7 +66,9 @@ export class ConfigureBotComponent {
       ],
       hasNext: true,
       hasPrevious: false,
-      hasHome: true
+      hasHome: true,
+      hasCode: false,
+      hasBack: true
     },
     {
       heading: 'Runtime',
@@ -65,7 +79,7 @@ export class ConfigureBotComponent {
           label: 'Vertex AI Reasoning Engine', 
           isSelected: true, 
           onClick: () => this.selectRunTime('Vertex AI Reasoning Engine'), 
-          subtitle: 'Vertex AI Reasoning Engine is a specialized service for deploying and running machine learning models, with features such as model monitoring, versioning, and A/B testing.',
+          subtitle: 'Vertex AI Reasoning Engine is purpose-built for deploying and serving machine learning models, offering specialized features like GPU support and model management, while Cloud Run is a more general-purpose serverless platform for deploying and scaling any containerized application. Choose Vertex AI Reasoning Engine if your focus is on machine learning model deployment and serving, and opt for Cloud Run when you need a versatile serverless platform for general-purpose applications.',
           caption: '# Initialize the Vertex AI client \naiplatform.init(project="your-project-id", location="your-region")\n\n# Deploy a model to the Vertex AI Reasoning Engine \nmodel = aiplatform.Model.upload( \n\tdisplay_name="your-model-name", \n\tartifact_uri="gs://your-bucket/your-model-path", \n\tserving_container_image_uri="us-docker.pkg.dev/vertex-ai/prediction/your-\ncontainer-image", ) endpoint = model.deploy( machine_type="n1-standard-4", )'
         },
         { 
@@ -77,12 +91,13 @@ export class ConfigureBotComponent {
         }
       ],
       selectedOptionResponse: {
-        subtitle: 'Vertex AI Reasoning Engine is a specialized service for deploying and running machine learning models, with features such as model monitoring, versioning, and A/B testing.',
+        subtitle: 'Vertex AI Reasoning Engine is purpose-built for deploying and serving machine learning models, offering specialized features like GPU support and model management, while Cloud Run is a more general-purpose serverless platform for deploying and scaling any containerized application. Choose Vertex AI Reasoning Engine if your focus is on machine learning model deployment and serving, and opt for Cloud Run when you need a versatile serverless platform for general-purpose applications.',
         caption: '# Initialize the Vertex AI client \naiplatform.init(project="your-project-id", location="your-region")\n\n# Deploy a model to the Vertex AI Reasoning Engine \nmodel = aiplatform.Model.upload( \n\tdisplay_name="your-model-name", \n\tartifact_uri="gs://your-bucket/your-model-path", \n\tserving_container_image_uri="us-docker.pkg.dev/vertex-ai/prediction/your-\ncontainer-image", ) endpoint = model.deploy( machine_type="n1-standard-4", )'
       },
       hasNext: true,
       hasPrevious: true,
-      hasHome: true
+      hasHome: true,
+      hasCode: true
     },
     {
       heading: 'Orchestration Framework',
@@ -117,7 +132,8 @@ export class ConfigureBotComponent {
       },
       hasNext: true,
       hasPrevious: true,
-      hasHome: true
+      hasHome: true,
+      hasCode: true
     },
 
     {
@@ -153,7 +169,8 @@ export class ConfigureBotComponent {
       },
       hasNext: true,
       hasPrevious: true,
-      hasHome: true
+      hasHome: true,
+      hasCode: true
     },
     {
       heading: 'Model',
@@ -182,7 +199,8 @@ export class ConfigureBotComponent {
       hasNext: false,
       hasPrevious: true,
       hasHome: true,
-      hasSubmit: true
+      hasSubmit: true,
+      hasCode: false
     }
   ];
 

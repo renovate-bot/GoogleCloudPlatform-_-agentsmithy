@@ -8,7 +8,7 @@
         font-size: 2em;
         position: absolute;
         left: 1.25em;
-        top: 1.25em;
+        top: 0;
         color: var(--text-color);
     }
 
@@ -19,6 +19,7 @@
     }
 
     .stepper-container {
+        margin-top: 50px;
         height: 60vh;
 
         .label {
@@ -46,7 +47,7 @@
             margin-left: 2em;
 
             .subtitle {
-                color: #1F1F1F;
+                color: var(--text-color);
                 font-size: 22px;
                 line-height: 24px;
                 margin: 0rem 2em 1rem 2rem;
@@ -116,7 +117,7 @@
 
     .footer-container .contrast {
         background-color: var(--primary-btn-color);
-        color: var(--primary-btn-font-color);
+        color: var(--primary-btn-text-color);
         border-color: var(--background-color);
         font-family: 'Google Sans';
         border-radius: 100px;
@@ -164,7 +165,7 @@
         }
 
         &.next {
-            color: var(--primary-btn-font-color) !important;
+            color: var(--primary-btn-text-color) !important;
         }
     }
 

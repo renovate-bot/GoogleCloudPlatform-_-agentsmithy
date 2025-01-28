@@ -4,7 +4,6 @@
             <ng-container *ngFor="let step of stepperConfig; let index = index">
                 <mat-step [formGroupName]="index" [stepControl]="formGroup.get('formArray')?.get([index])!">
                     <ng-template matStepLabel>{{ step.stepHeading }}</ng-template>
-                    <!-- <ng-template matStepHeader selected>{{ step.heading }}</ng-template> -->
                     <div class="heading">{{ step.heading }}</div>
 
                     <div *ngIf="step.contentType === 'form'" class="agent-container stepper-container">
@@ -39,7 +38,10 @@
                             </div>
                             <div *ngIf="step.selectedOptionResponse" class="option-response">
                                 <span class="subtitle">{{ step.selectedOptionResponse.subtitle }}</span>
-                                <span class="caption">{{ step.selectedOptionResponse.caption }}</span>
+                                <button *ngIf="step.hasCode" mat-button extended (click)="openDialog(step.selectedOptionResponse.caption)">
+                                    <mat-icon>code</mat-icon>
+                                    View Code Example
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -56,6 +58,10 @@
                             </button>
                         </div>
                         <div class="button-container">
+                            <button *ngIf="step.hasBack" class="backward" mat-fab extended (click)="goToHome()">
+                                <mat-icon>arrow_back</mat-icon>
+                                Back
+                            </button>
                             <button *ngIf="step.hasPrevious" class="backward" mat-fab extended matStepperPrevious>
                                 <mat-icon>arrow_back</mat-icon>
                                 Back
