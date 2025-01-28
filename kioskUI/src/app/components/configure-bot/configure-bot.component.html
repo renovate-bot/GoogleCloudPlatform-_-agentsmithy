@@ -3,7 +3,7 @@
         <mat-stepper formArrayName="formArray" #stepper>
             <ng-container *ngFor="let step of stepperConfig; let index = index">
                 <mat-step [formGroupName]="index" [stepControl]="formGroup.get('formArray')?.get([index])!">
-                    <ng-template matStepLabel>{{ step.stepHeading }}</ng-template>
+                    <ng-template matStepLabel><span>{{ step.stepHeading }}</span></ng-template>
                     <div class="heading">{{ step.heading }}</div>
 
                     <div *ngIf="step.contentType === 'form'" class="agent-container stepper-container">
@@ -38,10 +38,12 @@
                             </div>
                             <div *ngIf="step.selectedOptionResponse" class="option-response">
                                 <span class="subtitle">{{ step.selectedOptionResponse.subtitle }}</span>
-                                <button *ngIf="step.hasCode" mat-button extended (click)="openDialog(step.selectedOptionResponse.caption)">
-                                    <mat-icon>code</mat-icon>
-                                    View Code Example
-                                </button>
+                                <div class="view-code">
+                                    <button *ngIf="step.hasCode" mat-button extended (click)="openDialog(step.selectedOptionResponse.caption)">
+                                        <mat-icon>code</mat-icon>
+                                        View Code Example
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
