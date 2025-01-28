@@ -1,6 +1,6 @@
 resource "google_project_service" "cicd_services" {
   count              = length(local.cicd_services)
-  project            = var.cicd_runner_project_id
+  project            = var.prod_project_id
   service            = local.cicd_services[count.index]
   disable_on_destroy = false
 }

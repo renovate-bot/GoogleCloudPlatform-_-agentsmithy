@@ -12,11 +12,11 @@ module "log_export_to_bigquery" {
   source  = "terraform-google-modules/log-export/google"
   version = "10.0.0"
 
-  log_sink_name          = var.telemetry_sink_name
+  log_sink_name          = local.telemetry_sink_name
   parent_resource_type   = "project"
   parent_resource_id     = each.value
-  destination_uri        = "bigquery.googleapis.com/projects/${each.value}/datasets/${var.telemetry_bigquery_dataset_id}"
-  filter                 = var.telemetry_logs_filter
+  destination_uri        = "bigquery.googleapis.com/projects/${each.value}/datasets/${local.telemetry_bigquery_dataset_id}"
+  filter                 = local.telemetry_logs_filter
   bigquery_options       = { use_partitioned_tables = true }
   unique_writer_identity = true
   depends_on             = [resource.google_project_service.cicd_services, resource.google_project_service.shared_services]
@@ -26,8 +26,8 @@ module "log_export_to_bigquery" {
 resource "google_bigquery_dataset" "feedback_dataset" {
   for_each      = local.deploy_project_ids
   project       = each.value
-  dataset_id    = var.feedback_bigquery_dataset_id
-  friendly_name = var.feedback_bigquery_dataset_id
+  dataset_id    = local.feedback_bigquery_dataset_id
+  friendly_name = local.feedback_bigquery_dataset_id
   location      = var.region
   depends_on    = [resource.google_project_service.cicd_services, resource.google_project_service.shared_services]
 
@@ -38,11 +38,11 @@ module "feedback_export_to_bigquery" {
 
   source                 = "terraform-google-modules/log-export/google"
   version                = "10.0.0"
-  log_sink_name          = var.feedback_sink_name
+  log_sink_name          = local.feedback_sink_name
   parent_resource_type   = "project"
   parent_resource_id     = each.value
-  destination_uri        = "bigquery.googleapis.com/projects/${each.value}/datasets/${var.feedback_bigquery_dataset_id}"
-  filter                 = var.feedback_logs_filter
+  destination_uri        = "bigquery.googleapis.com/projects/${each.value}/datasets/${local.feedback_bigquery_dataset_id}"
+  filter                 = local.feedback_logs_filter
   bigquery_options       = { use_partitioned_tables = true }
   unique_writer_identity = true
   depends_on             = [resource.google_project_service.cicd_services, resource.google_project_service.shared_services, google_bigquery_dataset.feedback_dataset]
@@ -52,7 +52,7 @@ resource "google_bigquery_dataset" "telemetry_logs_dataset" {
   depends_on    = [module.log_export_to_bigquery, module.feedback_export_to_bigquery, resource.google_project_service.shared_services]
   for_each      = local.deploy_project_ids
   project       = each.value
-  dataset_id    = var.telemetry_bigquery_dataset_id
-  friendly_name = var.telemetry_bigquery_dataset_id
+  dataset_id    = local.telemetry_bigquery_dataset_id
+  friendly_name = local.telemetry_bigquery_dataset_id
   location      = var.region
 }

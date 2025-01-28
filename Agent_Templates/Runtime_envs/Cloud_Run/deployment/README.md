@@ -59,8 +59,6 @@ The application leverages [**Terraform**](http://terraform.io) to define and pro
    | Variable               | Description                                                     | Required |
    | ---------------------- | --------------------------------------------------------------- | :------: |
    | prod_project_id        | **Production** Google Cloud Project ID for resource deployment. |   Yes    |
-   | staging_project_id     | **Staging** Google Cloud Project ID for resource deployment.    |   Yes    |
-   | cicd_runner_project_id | Google Cloud Project ID where CI/CD pipelines will execute.     |   Yes    |
    | region                 | Google Cloud region for resource deployment.                    |   Yes    |
    | host_connection_name   | Name of the host connection you created in Cloud Build          |   Yes    |
    | repository_name        | Name of the repository you added to Cloud Build                 |   Yes    |

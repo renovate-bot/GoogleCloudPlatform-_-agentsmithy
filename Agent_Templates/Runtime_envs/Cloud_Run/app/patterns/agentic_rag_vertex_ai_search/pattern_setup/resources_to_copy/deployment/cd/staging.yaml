@@ -146,7 +146,7 @@ substitutions:
   _STAGING_PROJECT_ID: YOUR_STAGING_PROJECT_ID # Replace with your staging project ID
   _BUCKET_NAME_LOAD_TEST_RESULTS: YOUR_CICD_PROJECT_ID-cicd-load-test-results # Replace with your GCS bucket name
   _CONTAINER_NAME: genai-app-sample
-  _ARTIFACT_REGISTRY_REPO_NAME: genai-containers
+  _ARTIFACT_REGISTRY_REPO_NAME: agent-smithy-repo
   _CLOUD_RUN_APP_SA_NAME: genai-app-sample-cr-sa
   _REGION: us-central1
 

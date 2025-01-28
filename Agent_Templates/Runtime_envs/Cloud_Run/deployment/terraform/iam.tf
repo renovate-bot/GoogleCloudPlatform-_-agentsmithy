@@ -8,7 +8,7 @@ data "google_project" "projects" {
 resource "google_project_iam_member" "cicd_project_roles" {
   for_each = toset(var.cicd_roles)
 
-  project    = var.cicd_runner_project_id
+  project    = var.prod_project_id
   role       = each.value
   member     = "serviceAccount:${resource.google_service_account.cicd_runner_sa.email}"
   depends_on = [resource.google_project_service.cicd_services, resource.google_project_service.shared_services]
@@ -34,7 +34,7 @@ resource "google_project_iam_member" "other_projects_roles" {
 # 3. Allow Cloud Run service SA to pull containers stored in the CICD project
 resource "google_project_iam_member" "cicd_run_invoker_artifact_registry_reader" {
   for_each = local.deploy_project_ids
-  project  = var.cicd_runner_project_id
+  project  = var.prod_project_id
 
   role       = "roles/artifactregistry.reader"
   member     = "serviceAccount:service-${data.google_project.projects[each.key].number}@serverless-robot-prod.iam.gserviceaccount.com"

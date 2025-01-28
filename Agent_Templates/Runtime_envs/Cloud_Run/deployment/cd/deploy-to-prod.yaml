@@ -5,7 +5,7 @@ steps:
     args:
       - "run"
       - "deploy"
-      - "genai-app-sample"
+      - "genai-app-sample-prod"
       - "--image"
       - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_REGISTRY_REPO_NAME/$_CONTAINER_NAME"
       - "--region"
