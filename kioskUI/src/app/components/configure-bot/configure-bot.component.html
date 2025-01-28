@@ -27,7 +27,7 @@
                             <div class="option-selectors">
                                 <div class="example-radio-group">
                                     <div *ngFor="let option of step.options" [ngClass]="{'selected': option.isSelected}"
-                                        (click)="onRadioChange(step, option)" class="option-card">
+                                        (click)="onRadioChange(step, option, index)" class="option-card">
                                         <span class="icon">
                                             <span class="material-symbols-outlined">{{ option.isSelected ?
                                                 'check_circle' : 'radio_button_unchecked' }}</span>
@@ -68,7 +68,7 @@
                                 <mat-icon>arrow_back</mat-icon>
                                 Back
                             </button>
-                            <button *ngIf="step.hasNext" class="next" mat-fab extended matStepperNext>
+                            <button *ngIf="step.hasNext" class="next" mat-fab extended matStepperNext [disabled]="formGroup.get('formArray')?.get([index])!.invalid">
                                 <mat-icon>arrow_forward</mat-icon>
                                 Next
                             </button>

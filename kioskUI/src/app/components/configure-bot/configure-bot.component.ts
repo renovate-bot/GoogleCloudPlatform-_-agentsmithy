@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Validators, FormBuilder, FormArray, FormGroup, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
@@ -10,7 +10,7 @@ import { CodeDialogComponent } from '../code-dialog/code-dialog.component';
   templateUrl: './configure-bot.component.html',
   styleUrl: './configure-bot.component.scss'
 })
-export class ConfigureBotComponent {
+export class ConfigureBotComponent implements OnInit {
   formGroup: FormGroup;
   selectedRuntime: string = 'resoningEngine';
   selectedFramework: string = 'langchain';
@@ -29,16 +29,30 @@ export class ConfigureBotComponent {
 
 
   constructor(private _formBuilder: FormBuilder, private router: Router, private fb: FormBuilder, private themeService: ThemeService) { 
-    this.formGroup = this.fb.group({
-      formArray: this.fb.array([
-        this.fb.group({
-          agentName: [''],
-          description: [''],
-          agentType: [''],
-          industry: ['']
+    
+  }
+
+  ngOnInit() {
+    this.formGroup = this._formBuilder.group({
+      formArray: this._formBuilder.array([
+        this._formBuilder.group({
+          agentName: ['', Validators.required],
+          description: ['', Validators.required],
+          agentType: ['', Validators.required],
+          industry: ['', Validators.required],
         }),
-        this.fb.group({ /* runtime controls */ }),
-        this.fb.group({ /* other controls */ })
+        this._formBuilder.group({
+          runTime: ['', Validators.required] // Add validators for radio button groups
+        }),
+        this._formBuilder.group({
+          framework: ['', Validators.required]
+        }),
+        this._formBuilder.group({
+          tools: ['', Validators.required]
+        }),
+        this._formBuilder.group({
+          model: ['', Validators.required]
+        }),
       ])
     });
   }
@@ -203,31 +217,6 @@ export class ConfigureBotComponent {
       hasCode: false
     }
   ];
-
-  ngOnInit() {
-    this.formGroup = this._formBuilder.group({
-      formArray: this._formBuilder.array([
-        this._formBuilder.group({
-          agentName: ['', Validators.required],
-          description: ['', Validators.required],
-          agentType: ['', Validators.required],
-          industry: ['', Validators.required],
-        }),
-        this._formBuilder.group({
-          runTime: ['', Validators.required]
-        }),
-        this._formBuilder.group({
-          framework: ['', Validators.required]
-        }),
-        this._formBuilder.group({
-          tools: ['', Validators.required]
-        }),
-        this._formBuilder.group({
-          model: ['', Validators.required]
-        }),
-      ])
-    });
-  }
   
   selectRunTime(value: string) {
     console.log(value);
@@ -253,7 +242,7 @@ export class ConfigureBotComponent {
     this.router.navigate(['/']);
   }
 
-  onRadioChange(section: any, selectedOption: any) {
+  onRadioChange(section: any, selectedOption: any, stepIndex: number) {
     section.options.forEach((option: { isSelected: boolean; }) => {
       option.isSelected = option === selectedOption; 
     });
@@ -262,6 +251,17 @@ export class ConfigureBotComponent {
       caption: selectedOption.caption
     }
     selectedOption.onClick(); 
+
+    // Update form group value for radio button selection
+    const formArray = this.formGroup.get('formArray') as FormArray;
+    formArray.at(stepIndex).patchValue({  // Use stepIndex to target correct form group
+      runTime: this.selectedRuntime,       // Update with selected value
+      framework: this.selectedFramework,
+      tools: this.selectedTools,
+      model: this.selectedModel
+    });
+    console.log(formArray);
+    formArray.at(stepIndex).markAsDirty(); 
   }
 
   goToSpinnerComponent() {
