@@ -18,7 +18,7 @@ Please refer to the [root repository CONTRIBUTING.md file](https://github.com/Go
 To ensure code quality, we utilize automated checks. Before submitting a pull request, please run the following commands locally:
 
 ```bash
-poetry install --with streamlit,jupyter,lint
+poetry install --with jupyter,lint
 ```
 
 This installs development dependencies, including linting tools.

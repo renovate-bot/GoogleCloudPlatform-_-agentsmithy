@@ -82,7 +82,7 @@ This starter pack covers all aspects of Generative AI app development, from prot
 
 | Description                                                                                                                                                 | Visualization                                                                                                                          |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Experiment with your Generative AI application in a feature-rich playground, including chat curation, user feedback collection, multimodal input, and more! | ![Streamlit View](https://storage.googleapis.com/github-repo/generative-ai/sample-apps/e2e-gen-ai-app-starter-pack/streamlit_view.png) |
+| Experiment with your Generative AI application in a feature-rich playground, including chat curation, user feedback collection, multimodal input, and more! |
 
 </details>
 
@@ -108,7 +108,7 @@ Use the downloaded folder as a starting point for your own Generative AI applica
 Install required packages using Poetry:
 
 ```bash
-poetry install --with streamlit,jupyter
+poetry install --with jupyter
 ```
 
 ### Setup
@@ -137,7 +137,7 @@ For full command options and usage, refer to the [Makefile](Makefile).
 
 1. **Prototype Your Chain:** Build your Generative AI application using different methodologies and frameworks. Use Vertex AI Evaluation for assessing the performance of your application and its chain of steps. **See [`notebooks/getting_started.ipynb`](notebooks/getting_started.ipynb) for a tutorial to get started building and evaluating your chain.**
 2. **Integrate into the App:** Import your chain into the app. Edit the `app/chain.py` file to add your chain.
-3. **Playground Testing:** Explore your chain's functionality using the Streamlit playground. Take advantage of the comprehensive playground features, such as chat history management, user feedback mechanisms, support for various input types, and additional capabilities. You can run the playground locally with the `make playground` command.
+3. **Playground Testing:** Explore your chain's functionality using the frontend playground. Take advantage of the comprehensive playground features, such as chat history management, user feedback mechanisms, support for various input types, and additional capabilities. You can run the playground locally with the `make playground` command.
 4. **Deploy with CI/CD:** Configure and trigger the CI/CD pipelines. Edit tests if needed. See the [deployment section](#deployment) below for more details.
 5. **Monitor in Production:** Track performance and gather insights using Cloud Logging, Tracing, and the Looker Studio dashboard. Use the gathered data to iterate on your Generative AI application.
 

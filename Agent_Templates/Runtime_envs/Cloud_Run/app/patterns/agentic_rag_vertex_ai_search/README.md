@@ -110,7 +110,7 @@ Please note that the ingestion in the example is set to run automatically once p
    1. Navigate to the root folder & install the required dependencies:
 
       ```bash
-      poetry install --with streamlit,jupyter
+      poetry install --with jupyter
       ```
 
    2. Configure your Google Cloud environment:
