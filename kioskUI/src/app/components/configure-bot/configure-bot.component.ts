@@ -1,58 +1,38 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { Validators, FormBuilder, FormArray, FormGroup, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
-import { MatDialog } from '@angular/material/dialog';
-import { CodeDialogComponent } from '../code-dialog/code-dialog.component';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-configure-bot',
   templateUrl: './configure-bot.component.html',
   styleUrl: './configure-bot.component.scss'
 })
-export class ConfigureBotComponent implements OnInit {
+export class ConfigureBotComponent {
   formGroup: FormGroup;
   selectedRuntime: string = 'resoningEngine';
   selectedFramework: string = 'langchain';
   selectedTools: string = 'api';
   selectedModel: string = 'gemini';
-
-  dialog = inject(MatDialog);
-
-  openDialog(codeExample: any) {
-    this.dialog.open(CodeDialogComponent, {
-      data: {
-        code: codeExample,
-      },
-    });
-  }
+  @ViewChild('viewCode', { static: true })
+  viewCode: TemplateRef<{}>;
+  viewCodeDialogRef?: MatDialogRef<{}>;
 
 
-  constructor(private _formBuilder: FormBuilder, private router: Router, private fb: FormBuilder, private themeService: ThemeService) { 
-    
-  }
-
-  ngOnInit() {
-    this.formGroup = this._formBuilder.group({
-      formArray: this._formBuilder.array([
-        this._formBuilder.group({
-          agentName: ['', Validators.required],
-          description: ['', Validators.required],
-          agentType: ['', Validators.required],
-          industry: ['', Validators.required],
+  constructor(private _formBuilder: FormBuilder, 
+    private router: Router, private fb: FormBuilder
+    , private themeService: ThemeService,private readonly dialog: MatDialog,) { 
+    this.formGroup = this.fb.group({
+      formArray: this.fb.array([
+        this.fb.group({
+          agentName: [''],
+          description: [''],
+          agentType: [''],
+          industry: ['']
         }),
-        this._formBuilder.group({
-          runTime: ['', Validators.required] // Add validators for radio button groups
-        }),
-        this._formBuilder.group({
-          framework: ['', Validators.required]
-        }),
-        this._formBuilder.group({
-          tools: ['', Validators.required]
-        }),
-        this._formBuilder.group({
-          model: ['', Validators.required]
-        }),
+        this.fb.group({ /* runtime controls */ }),
+        this.fb.group({ /* other controls */ })
       ])
     });
   }
@@ -217,6 +197,31 @@ export class ConfigureBotComponent implements OnInit {
       hasCode: false
     }
   ];
+
+  ngOnInit() {
+    this.formGroup = this._formBuilder.group({
+      formArray: this._formBuilder.array([
+        this._formBuilder.group({
+          agentName: ['', Validators.required],
+          description: ['', Validators.required],
+          agentType: ['', Validators.required],
+          industry: ['', Validators.required],
+        }),
+        this._formBuilder.group({
+          runTime: ['', Validators.required] // Add validators for radio button groups
+        }),
+        this._formBuilder.group({
+          framework: ['', Validators.required]
+        }),
+        this._formBuilder.group({
+          tools: ['', Validators.required]
+        }),
+        this._formBuilder.group({
+          model: ['', Validators.required]
+        }),
+      ])
+    });
+  }
   
   selectRunTime(value: string) {
     console.log(value);
@@ -261,7 +266,7 @@ export class ConfigureBotComponent implements OnInit {
       model: this.selectedModel
     });
     console.log(formArray);
-    formArray.at(stepIndex).markAsDirty(); 
+    formArray.at(stepIndex).markAsDirty();
   }
 
   goToSpinnerComponent() {
@@ -276,4 +281,10 @@ export class ConfigureBotComponent implements OnInit {
   toggleTheme(): void {
     this.themeService.toggleTheme();
   }
+
+  openViewCodeModal(record: any) {
+    this.viewCodeDialogRef = this.dialog.open(this.viewCode, { width: '500px', data: record });
+
+  }
+  
 }

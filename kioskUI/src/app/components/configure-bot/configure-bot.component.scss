@@ -8,7 +8,7 @@
         font-size: 2em;
         position: absolute;
         left: 1.25em;
-        top: 0;
+        top: .5em;
         color: var(--text-color);
     }
 
@@ -19,7 +19,7 @@
     }
 
     .stepper-container {
-        margin-top: 50px;
+        margin-top: 30px;
         height: 60vh;
 
         .label {
@@ -55,6 +55,18 @@
                 white-space: pre-wrap;
             }
 
+            .view-code-button {
+
+                width: fit-content;
+                margin: 3rem 2em;
+
+                ::ng-deep.mdc-button__label {
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                }
+            }
+
             .caption {
                 color: #747775;
                 font-size: 1em;
@@ -62,20 +74,16 @@
                 padding: 5px 10px;
                 white-space: pre-wrap;
             }
-
-            .view-code {
-                margin: 0rem 2em 1rem 1.5rem;
-            }
         }
 
         .option-card {
+
             border: 2px solid #C4C7C5;
             border-radius: 1em;
             display: flex;
             align-items: center;
             margin-bottom: 1.5em;
             font-weight: 400;
-            width: 100%;
 
             &.selected {
                 padding: 1em;
@@ -104,8 +112,8 @@
             }
 
             .text {
-                font-size: 1.5em;
                 padding: .8em 2em 0.5em 0.5em;
+                font-size: 1.5em;
             }
         }
 
@@ -195,19 +203,20 @@
 
     ::ng-deep.mat-stepper-horizontal-line {
         border: none;
-        flex: none
+        flex: none;
+        margin: 0px -15px;
     }
 
     ::ng-deep.mat-step-icon-selected,
     ::ng-deep.mat-step-icon-state-edit {
-        border: 2px solid #0B57D0 !important;
+        border: 2px solid var(--secondary-background-color) !important;
         --mat-stepper-header-selected-state-icon-background-color: white;
         --mat-stepper-header-icon-foreground-color: white;
         --mat-stepper-header-icon-background-color: white;
         --mat-stepper-header-edit-state-icon-background-color: white;
         --mat-stepper-header-edit-state-icon-foreground-color: white;
 
-        color: #0B57D0;
+        color: var(--secondary-background-color);
     }
 
     ::ng-deep.mat-step-icon-state-done {
@@ -222,9 +231,10 @@
         font-size: 16px;
         height: 20px;
         width: 20px;
-        --mat-stepper-header-icon-foreground-color: var(--secondary-btn-color);
-        border: 2px solid var(--secondary-btn-color);
-        --mat-stepper-header-icon-background-color: white;
+        //  color: ;
+        --mat-stepper-header-icon-foreground-color: var(--secondary-background-color);
+        border: 2px solid var(--secondary-background-color);
+        --mat-stepper-header-icon-background-color: #C2E7FF;
         --mat-stepper-header-selected-state-icon-foreground-color: rgba(188, 218, 255, 1);
     }
 
@@ -253,24 +263,34 @@
     //     padding: 5px 10px;
     // }
 
-    ::ng-deep.mat-step-header{
+    ::ng-deep.mat-step-header {
         height: 32px;
-        border-radius: 10px;
+        border-radius: 4px;
         background-color: #C2E7FF;
         padding: 0px 10px !important;
-        margin: 0px 2px !important;
+        margin: 0px 0px !important;
 
-        // &:active{
+        &:first-child {
+            border-radius: 20px 4px 4px 20px !important;
+        }
+
+        &:last-child {
+            border-radius: 4px 20px 20px 4px !important;
+
+        }
+
+
+        // &:focus{
         //     background-color: var(--secondary-background-color) !important;
         // }
 
-        // &:focus{
+        // &:active{
         //     background-color: var(--secondary-background-color) !important;
         // }
     }
 
     ::ng-deep.mat-step-text-label {
-        color: white !important;
+        color: var(--secondary-background-color) !important;
     }
 
     ::ng-deep.mat-step-header:hover {
@@ -281,21 +301,22 @@
         margin: 0px 0px !important;
     }
 
-    // ::ng-deep.mat-step-label-active {
-    //     background-color: var(--secx`ondary-background-color);
-    // }
-
-    // .mat-header-active {
-    //     .mat-step-header {
-    //         background-color: var(--secondary-background-color) !important;
-    //     }
-    // }
-
-    ::ng-deep .mat-step-header[aria-selected="true"]  {
+    ::ng-deep.mat-step-header[aria-selected="true"] {
         background-color: var(--secondary-background-color) !important;
-      
-        & div.mat-step-label.mat-step-label-active.mat-step-label-selected {
-            color: #FFF;
+        border-radius: 100px !important;
+
+        .mat-step-text-label {
+            color: white !important;
         }
-      } 
+    }
+
+
+}
+
+.code-container {
+    padding: 2em;
+    background-color: #E3E3E3;
+    color: #444746;
+    white-space: pre-wrap;
+    line-height: 200%;
 }
