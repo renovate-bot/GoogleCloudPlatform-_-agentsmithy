@@ -23,18 +23,18 @@ export class ConfigureBotComponent {
   constructor(private _formBuilder: FormBuilder, 
     private router: Router, private fb: FormBuilder
     , private themeService: ThemeService,private readonly dialog: MatDialog,) { 
-    this.formGroup = this.fb.group({
-      formArray: this.fb.array([
-        this.fb.group({
-          agentName: [''],
-          description: [''],
-          agentType: [''],
-          industry: ['']
-        }),
-        this.fb.group({ /* runtime controls */ }),
-        this.fb.group({ /* other controls */ })
-      ])
-    });
+    // this.formGroup = this.fb.group({
+    //   formArray: this.fb.array([
+    //     this.fb.group({
+    //       agentName: [''],
+    //       description: [''],
+    //       agentType: [''],
+    //       industry: ['']
+    //     }),
+    //     this.fb.group({ /* runtime controls */ }),
+    //     this.fb.group({ /* other controls */ })
+    //   ])
+    // });
   }
 
   get formArray(): AbstractControl | null { return this.formGroup.get('formArray'); }
