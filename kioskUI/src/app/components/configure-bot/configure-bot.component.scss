@@ -114,7 +114,7 @@
             .text {
                 padding: .8em 2em 0.5em 0.5em;
                 font-size: 1.5em;
-                color: var(--checkbox-color);
+                color: var(--checkbox-color) !important ;
             }
         }
 
@@ -310,9 +310,9 @@
         }
     }
 
-    ::ng-deep.material-symbols-outlined {
-        color: var(--checkbox-color) !important;
-    }
+    // ::ng-deep.material-symbols-outlined {
+    //     color: var(--checkbox-color) !important;
+    // }
 
 
 }
