@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { UserService } from 'src/app/services/user/user.service';
 import { MatDialog } from '@angular/material/dialog';
 import { environment } from 'src/environments/environment';
-import { IntentDetails, IntentService } from 'src/app/services/intent.service';
 
 const GOOGLE_CLOUD_ICON =
   `<svg width="694px" height="558px" viewBox="0 0 694 558" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -26,19 +25,14 @@ const GOOGLE_CLOUD_ICON =
 })
 export class HeaderComponent {
   headerTitle: string = environment.chatbotName;
-  intentsInProgress: IntentDetails[] = [];
 
   constructor(iconRegistry: MatIconRegistry,
     sanitizer: DomSanitizer,
     private router: Router,
     public _UserService: UserService,
     public dialog: MatDialog,
-    private intentsService: IntentService,
   ) {
     iconRegistry.addSvgIconLiteral('google-cloud-icon', sanitizer.bypassSecurityTrustHtml(GOOGLE_CLOUD_ICON));
-    this.intentsService.getAllIntent().subscribe(allIntents => {
-      this.intentsInProgress = allIntents.filter(i => i.status === "1" || i.status === "3")
-    })
   }
 
   navigate() {

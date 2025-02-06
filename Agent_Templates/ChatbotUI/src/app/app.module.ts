@@ -52,11 +52,9 @@ import 'prismjs/plugins/line-highlight/prism-line-highlight.js';
 import { ToastMessageComponent } from './components/shared/toast-message/toast-message.component';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { DialogueBoxComponent } from './dialogue-box/dialogue-box.component';
-import { ManageIntentComponent } from './components/manage-intent/manage-intent.component';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatStepperModule } from '@angular/material/stepper';
-import { IntentFormComponent } from './components/manage-intent/intent-form/intent-form.component';
-import { CreateIntentFormComponent } from './components/manage-intent/create-intent-form/create-intent-form.component'
+
 
 @NgModule({
   declarations: [
@@ -69,9 +67,6 @@ import { CreateIntentFormComponent } from './components/manage-intent/create-int
     SuggestionCardComponent,
     ToastMessageComponent,
     DialogueBoxComponent,
-    ManageIntentComponent,
-    IntentFormComponent,
-    CreateIntentFormComponent
   ],
   imports: [
     BrowserModule,
