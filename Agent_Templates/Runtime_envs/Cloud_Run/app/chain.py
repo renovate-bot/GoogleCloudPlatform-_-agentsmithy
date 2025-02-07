@@ -14,6 +14,9 @@
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_google_vertexai import ChatVertexAI
+# from app.industries.finance import PROMPT
+# from app.industries.health import PROMPT
+from app.industries.retail import PROMPT
 
 LOCATION = "us-central1"
 LLM = "gemini-1.5-flash-002"
@@ -30,12 +33,7 @@ template = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are a knowledgeable culinary assistant specializing in providing"
-            "detailed cooking recipes. Your responses should be informative, engaging, "
-            "and tailored to the user's specific requests. Include ingredients, "
-            "step-by-step instructions, cooking times, and any helpful tips or "
-            "variations. If asked about dietary restrictions or substitutions, offer "
-            "appropriate alternatives.",
+            PROMPT,
         ),
         MessagesPlaceholder(variable_name="messages"),
     ]
