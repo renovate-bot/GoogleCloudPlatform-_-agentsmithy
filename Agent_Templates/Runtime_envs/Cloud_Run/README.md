@@ -1,4 +1,4 @@
-# 🚀 End-to-End Gen AI App Starter Pack 🚀
+# 🚀 AgentSmithy Cloud Run Runtime Template 🚀
 
 > **From Prototype to Production in Minutes.**
 
