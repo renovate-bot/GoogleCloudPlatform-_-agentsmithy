@@ -1,4 +1,3 @@
-import { IntentService, IntentDetails, Model } from '../../services/intent.service';
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { BroadcastService } from 'src/app/services/broadcast.service';
@@ -11,7 +10,6 @@ import { ReplaySubject } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { animate, sequence, state, style, transition, trigger } from '@angular/animations';
 import { SpeechToTextService } from '../../services/speech-to-text';
-import { CreateIntentFormComponent } from '../manage-intent/create-intent-form/create-intent-form.component';
 
 @Component({
   selector: 'app-main',
@@ -35,7 +33,11 @@ import { CreateIntentFormComponent } from '../manage-intent/create-intent-form/c
   ]
 })
 export class MainComponent {
+  hasPermission: boolean = false;
+  permissionRequested: boolean = false;
+  stream: MediaStream | null = null; // Store the stream
   isRecording = false;
+  
   transcribedText = '';
   mediaRecorder: MediaRecorder;
   audioChunks: Blob[] = [];
@@ -56,7 +58,6 @@ export class MainComponent {
   userBadgeTemplate!: TemplateRef<{}>;
 
   intentSelected: boolean;
-  intents: IntentDetails[] = [];
   dialogRef: any;
 
   private readonly destroyed = new ReplaySubject<void>(1);
@@ -70,29 +71,16 @@ export class MainComponent {
     private fb: UntypedFormBuilder,
     private sessionService: SessionService,
     public userService: UserService,
-    private intentsService: IntentService,
     public dialog: MatDialog,
     private _snackBar: MatSnackBar,
     private speechToTextService: SpeechToTextService,
   ) {
-    this.intentsService.getAllIntent().subscribe(response => {
-      if(response.length > 0) this.intents = response;
-      else this.openCreateIntentForm();
-    });
     this.searchForm = this.fb.group({
       searchTerm: this.fb.control('')
     });
     this.savedUser = userService.getUserDetails();
     this.sessionService.createSession();
     this.setTimeoutForToolTipText();
-  }
-
-  openCreateIntentForm(){
-    this.createIntentComponentInstance = this.dialog.open(CreateIntentFormComponent,
-      { disableClose: true,
-        height: '600px',
-        width: '1120px'
-    }).afterClosed().subscribe(() => window.location.reload())
   }
 
   navigate() {
@@ -107,11 +95,6 @@ export class MainComponent {
 
   changeSelectedAssistance(assistantType: string) {
     this.selectedType = assistantType;
-  }
-
-  chipControlOnSelect(intent: IntentDetails) {
-    let queryIntent = intent.name;
-    this.chipSelected = queryIntent;
   }
 
   removeIntentSelection() {
@@ -136,36 +119,6 @@ export class MainComponent {
     this.onHover = false;
   }
 
-  expandIntentContainer(intent: IntentDetails) {
-    let classNameToFilterElement = intent.name;
-    this.chipControlOnSelect(intent);
-    if (this.lastExpandedElement != '') {
-      document.getElementsByClassName(this.lastExpandedElement)[0]?.classList.add('intent-container-box');
-      document.getElementsByClassName(this.lastExpandedElement)[0]?.classList.remove('selected-intent-box');
-      document.getElementsByClassName(this.lastExpandedElement + "_close_button_container")[0]?.classList.remove('expand-close-button-container')
-      document.getElementsByClassName(this.lastExpandedElement + "_suggested_questions_container")[0]?.classList.remove('selected-intent-suggested-question');
-    }
-    if (this.lastExpandedElement == classNameToFilterElement) {
-      document.getElementsByClassName(this.lastExpandedElement)[0]?.classList.remove('selected-intent-box');
-      document.getElementsByClassName(classNameToFilterElement + "_close_button_container")[0]?.classList.remove('expand-close-button-container')
-      document.getElementsByClassName(this.lastExpandedElement + "_suggested_questions_container")[0]?.classList.remove('selected-intent-suggested-question');
-      this.lastExpandedElement = '';
-      return;
-    }
-    this.lastExpandedElement = classNameToFilterElement;
-    const elementToExpand = document.getElementsByClassName(classNameToFilterElement);
-    elementToExpand[0]?.classList.remove('intent-container-box');
-    elementToExpand[0]?.classList.add('selected-intent-box');
-    const suggestedQuestionElement = document.getElementsByClassName(classNameToFilterElement + "_suggested_questions_container");
-    suggestedQuestionElement[0]?.classList.add('selected-intent-suggested-question');
-    const closeButtonElement = document.getElementsByClassName(classNameToFilterElement + "_close_button_container");
-    closeButtonElement[0]?.classList.add('expand-close-button-container');
-
-    setTimeout(() => { this.scrollToSelectedElement(classNameToFilterElement) }, 100);
-
-    return;
-  }
-
   getHumanReadablestring(s: string) {
     return s.replace("_", " ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
   }
@@ -173,11 +126,6 @@ export class MainComponent {
   scrollToSelectedElement(classNameToFilterElement: string) {
     const childElement = document.getElementById(classNameToFilterElement);
     childElement?.scrollIntoView();
-  }
-
-  ngOnDestroy() {
-    this.destroyed.next();
-    this.destroyed.complete();
   }
 
   openSnackBar(message: string, color: string) {
@@ -190,25 +138,74 @@ export class MainComponent {
   }
 
   ngOnInit() {
+    this.checkMicPermission(); 
+  }
+
+  ngOnDestroy() {
+    this.destroyed.next();
+    this.destroyed.complete();
+    if (this.stream) {
+      this.stopStream(); // Stop the stream when component is destroyed
+    }
+  }
+
+  async checkMicPermission() {
+    try {
+      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      this.hasPermission = permissionStatus.state === 'granted';
+
+      permissionStatus.onchange = () => { // Listen for permission changes
+        this.hasPermission = permissionStatus.state === 'granted';
+      };
+
+    } catch (error) {
+      console.error('Error checking microphone permission:', error);
+    }
+  }
+
+  startStream() {
+    if (this.stream) return; // Stream already running
+    this.isRecording = true;
     navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => this.setupMediaRecorder(stream));
+    .then(stream => {
+      this.stream = stream;
+      console.log('Microphone stream started:', this.stream);
+      // ... any other actions with stream ...
+    })
+    .catch(err => {
+      console.error('Error starting stream:', err);
+      this.hasPermission = false; // Ensure to update permission status
+    });
+  }
+
+  stopStream() {
+    if (this.stream) {
+      this.isRecording = false;
+      const tracks = this.stream.getAudioTracks();
+      tracks.forEach(track => track.stop());
+      this.stream = null;
+      console.log('Microphone stream stopped.');
+    }
+  }
+
+  async requestMicPermission() {
+    this.permissionRequested = true; // Set flag to indicate request was made
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.hasPermission = true;
+      this.permissionRequested = false; // Reset flag
+      // Now you can use the microphone stream (this.stream)
+      console.log('Microphone stream granted:', this.stream);
+    } catch (error) {
+      this.hasPermission = false;
+      console.error('Error getting microphone permission:', error);
+    }
   }
 
   setupMediaRecorder(stream: MediaStream) {
     this.mediaRecorder = new MediaRecorder(stream);
     this.mediaRecorder.ondataavailable = event => this.audioChunks.push(event.data);
     this.mediaRecorder.onstop = () => this.sendAudioToGCP();
-  }
-
-  startRecording() {
-    this.isRecording = true;
-    this.audioChunks = [];
-    this.mediaRecorder.start();
-  }
-
-  stopRecording() {
-    this.isRecording = false;
-    this.mediaRecorder.stop();
   }
 
   async sendAudioToGCP() {

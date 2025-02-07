@@ -4,7 +4,6 @@ export interface Message {
   type: string,
   responseTime?: string
   shareable: boolean,
-  categoryIntent?: string,
   extras?: Extras,
   suggestedQuestion?: string[],
   botStartTime?: string;

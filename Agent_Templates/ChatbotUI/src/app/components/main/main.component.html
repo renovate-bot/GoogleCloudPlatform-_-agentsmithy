@@ -20,14 +20,14 @@
           </mat-chip-grid>
         </div>
         <div class="micIcon">
-          <button mat-icon-button (click)="startRecording()" matTooltip="Record"
+          <button mat-icon-button (click)="startStream()" matTooltip="Record"
             *ngIf="!isRecording"><mat-icon>mic_none</mat-icon>
           </button>
           <span class="recording-container" *ngIf="isRecording">
             <span class="blue-dot">&nbsp;</span>
             <span class="green-dot">&nbsp;</span>
             <span class="yellow-dot">&nbsp;</span>
-            <button (click)="stopRecording()" style="color: red;" class="reset-button initial" mat-icon-button
+            <button (click)="stopStream()" style="color: red;" class="reset-button initial" mat-icon-button
               matTooltip="Stop Recording" aria-label="record button">
               <mat-icon class="material-icons-outlined">stop_circle</mat-icon>
             </button>
@@ -38,17 +38,4 @@
         </div>
       </div>
     </div>
-
-    <div *ngIf="this.intents.length > 0" class="container main-div margin-div journey-chips">
-      <div class="suggested-question-container">
-          <mat-chip-set>
-            <mat-chip *ngFor="let question of this.intents[0].questions" class="suggested-question-chip-row" (click)="assignQToChatQuery(question)">            
-              <span class="suggested-question-chip">
-                <mat-icon class="suggested-question-icon">subdirectory_arrow_left</mat-icon>
-                <span class="suggested-question-text">{{question}}</span>
-              </span>
-            </mat-chip>
-          </mat-chip-set>
-        </div>
-      </div>
   </div>

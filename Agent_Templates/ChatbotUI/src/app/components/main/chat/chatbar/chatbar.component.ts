@@ -2,16 +2,13 @@ import { Component, EventEmitter, Output, OnDestroy } from '@angular/core';
 import { ChatService } from 'src/app/services/chat.service';
 import { UserService } from 'src/app/services/user/user.service';
 import { BroadcastService } from 'src/app/services/broadcast.service';
-import { Observable, timeout, ReplaySubject } from 'rxjs';
-import { SessionService } from 'src/app/services/user/session.service';
-import { Router } from '@angular/router';
+import { last, Observable, ReplaySubject, single, Subject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
-import { Chat} from 'src/app/models/chat.model';
+import { Chat, ChatEvent} from 'src/app/models/chat.model';
 import { animate, sequence, state, style, transition, trigger } from '@angular/animations';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { SpeechToTextService } from 'src/app/services/speech-to-text';
 import { Message, SuggestionData } from 'src/app/models/messegeType.model';
-import { environment } from 'src/environments/environment';
+import { HttpDownloadProgressEvent, HttpEvent, HttpEventType } from '@angular/common/http';
 
 @Component({
   selector: 'app-chatbar',
@@ -102,13 +99,11 @@ export class ChatbarComponent implements OnDestroy {
   mediaRecorder: MediaRecorder;
   audioChunks: Blob[] = [];
 
-  constructor(private router: Router,
+  constructor(
     public dialog: MatDialog,
     private chatService: ChatService,
-    private sessionService: SessionService,
     public userService: UserService,
     private broadcastService: BroadcastService,
-    private _snackBar: MatSnackBar,
     private speechToTextService: SpeechToTextService,
   ) {
     this.chatQuery$ = this.broadcastService.chatQuery$
@@ -127,14 +122,11 @@ export class ChatbarComponent implements OnDestroy {
 
   async sendAudioToGCP() {
     const audioBlob = new Blob(this.audioChunks);
-    // console.log(audioBlob);
     (await this.speechToTextService.transcribeAudio(audioBlob)).subscribe(
       (response: any) => {
-        // console.log(response)
         this.chatQuery = response[0]
       },
       (error: any) => {
-        // Handle errors
       }
     );
   }
@@ -166,12 +158,20 @@ export class ChatbarComponent implements OnDestroy {
       this.botStartTime = new Date().getTime()
       this.initialQuestion = this.conversation[0].body;
       this.pushQuestion(this.initialQuestion);
-      this.chatService.postChat(this.conversation[0].body).pipe(timeout(90000)).subscribe({
-        next: (response: Chat) => this.handleBotResponse(response),
-        error: (err) => {
-          this.setErrorMessage();
-        }
-      })
+      this.chatService.postChat(this.conversation[0].body).subscribe({
+        next: (event: HttpEvent<string>) => {
+          if (event.type === HttpEventType.DownloadProgress) {
+            this.handleBotResponse(
+              (event as HttpDownloadProgressEvent).partialText + "…",
+            );
+          } else if (event.type === HttpEventType.Response) {
+            this.handleBotResponse(event.body!);
+          }
+        },
+        error: () => {
+          console.log("Error getting stream events");
+        },
+      });
     }
   }
 
@@ -225,12 +225,20 @@ export class ChatbarComponent implements OnDestroy {
     this.showLoader = true;
     this.setTimeoutForLoaderText();
     this.setCyclicBackgroundImages();
-    this.chatService.postChat(singleMessage.body).pipe(timeout(90000)).subscribe({
-      next: (response: Chat) => this.handleBotResponse(response),
-      error: (err) => {
-        this.setErrorMessage();
-      }
-    })
+    this.chatService.postChat(singleMessage.body).subscribe({
+      next: (event: HttpEvent<string>) => {
+        if (event.type === HttpEventType.DownloadProgress) {
+          this.handleBotResponse(
+            (event as HttpDownloadProgressEvent).partialText as string
+          );
+        } else if (event.type === HttpEventType.Response) {
+          this.handleBotResponse(event.body as string);
+        }
+      },
+      error: () => {
+        console.log("Error getting stream events");
+      },
+    });
   }
 
   setErrorMessage() {
@@ -279,7 +287,26 @@ export class ChatbarComponent implements OnDestroy {
     this.loaderIndex++;
   }
 
-  handleBotResponse(response: Chat) {
+  handleBotResponse(answer: string) {
+    let events: string[] = answer.split("\n");
+    events.pop();
+    let answerId = (JSON.parse(events[0]) as ChatEvent ).data.run_id
+
+    if ( answerId === this.conversation[0].chat_id) {
+      let lastEvent: ChatEvent = JSON.parse(events.slice(-1)[0]);
+      if(lastEvent.event == "on_chat_model_stream") {
+        this.conversation[0].botAnswer += lastEvent.data.chunk!.content
+      }
+      return;
+    } 
+
+    let response: Chat = {
+      id: answerId,
+      question: this.chatQuery,
+      answer: "",
+      suggested_questions: []
+    }
+    
     let endTime = new Date().getTime();
     this.assignId(response?.id);
 
@@ -289,14 +316,13 @@ export class ChatbarComponent implements OnDestroy {
       type: 'bot',
       responseTime: ((endTime - this.botStartTime) / 1000).toString(),
       shareable: true,
-      categoryIntent: response.intent,
       botStartTime: this.botStartTime.toString(),
       extras: {
         like: false,
         dislike: false,
         delete: false,
       },
-      chat_id: response.id
+      chat_id: response.id!
     };
 
     this.conversation.unshift(singleMesage);
@@ -315,7 +341,6 @@ export class ChatbarComponent implements OnDestroy {
         type: 'bot',
         responseTime: ((endTime - this.botStartTime) / 1000).toString(),
         shareable: true,
-        categoryIntent: response.intent,
         extras: {
           like: false,
           dislike: false
@@ -351,21 +376,6 @@ export class ChatbarComponent implements OnDestroy {
   removeSuggestionElement() {
     this.showSuggesstion = false;
     document.querySelectorAll(".bot-suggestion-container").forEach(el => el.remove());
-  }
-
-  resetBrowser() {
-    this.sessionService.createSession();
-    this.router.navigateByUrl('/');
-  }
-
-
-  openSnackBar(message: string, color: string) {
-    this._snackBar.open(message, 'Close', {
-      panelClass: [color],
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-      duration: 3000,
-    });
   }
 
   startRecording() {
