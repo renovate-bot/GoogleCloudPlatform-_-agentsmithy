@@ -1,6 +1,6 @@
 # Releases
 
-## v0.1.0 (Initial Release) - Mmm dd, yyyy
+## vx.x.x (Initial Release) - MMM dd, yyyy
 
 ### Features
 

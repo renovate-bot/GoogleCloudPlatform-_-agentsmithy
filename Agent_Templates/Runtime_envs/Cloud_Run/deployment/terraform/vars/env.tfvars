@@ -1,13 +1,13 @@
 # Your Production Google Cloud project id
-prod_project_id = "agentsmithy-dev"
+prod_project_id = ""
 
 # The Google Cloud region you will use to deploy the infrastructure
-region = "us-central1"
+region = ""
 
 # Name of the host connection you created in Cloud Build
-host_connection_name = "AgentSmithy-Sample"
+host_connection_name = ""
 
 # Name of the repository you added to Cloud Build
-repository_name = "IvanERufino-AgentSmithy-Sample"
+repository_name = ""
 
-agent_name = "Agent Smithy"
+agent_name = ""

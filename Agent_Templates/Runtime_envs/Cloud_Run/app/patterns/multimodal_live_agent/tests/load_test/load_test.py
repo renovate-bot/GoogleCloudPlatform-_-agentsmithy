@@ -14,7 +14,6 @@
 # pylint: disable=R0801
 
 import time
-
 from locust import HttpUser, between, task
 
 

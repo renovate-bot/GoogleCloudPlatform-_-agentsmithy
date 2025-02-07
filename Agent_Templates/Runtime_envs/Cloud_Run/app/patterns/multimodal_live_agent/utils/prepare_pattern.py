@@ -64,11 +64,6 @@ def main() -> None:
     if patterns_path.exists():
         shutil.rmtree(patterns_path)
 
-    # Delete streamlit app
-    streamlit_path = root_path / "streamlit"
-    if streamlit_path.exists():
-        shutil.rmtree(streamlit_path)
-
     # Move pattern README to root as PATTERN_README
     pattern_readme = pattern_path / "README.md"
     if pattern_readme.exists():

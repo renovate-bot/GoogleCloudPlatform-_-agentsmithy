@@ -36,6 +36,12 @@ A simple agent implemented using LangGraph, a framework for building agent and m
 
 A RAG (Retrieval-Augmented Generation) pattern using Vertex AI Agent Builder Search for the retrieval of information. It includes a data ingestion pipeline to automate the update of your data. For more details on how to set it up please review the related readme file under the respective folder.
 
+### Switching Between Patterns
+
+To switch between different patterns, modify the import statement in `server.py`.
+
+All chains have the same interface, allowing for seamless swapping.
+
 ## Monitoring and Observability
 
 ![monitoring_flow](https://storage.googleapis.com/github-repo/generative-ai/sample-apps/e2e-gen-ai-app-starter-pack/monitoring_flow.png)

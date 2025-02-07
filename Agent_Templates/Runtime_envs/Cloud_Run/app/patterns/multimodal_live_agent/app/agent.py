@@ -15,13 +15,14 @@
 import os
 from typing import Dict
 
-from app.templates import FORMAT_DOCS, SYSTEM_INSTRUCTION
-from app.vector_store import get_vector_store
 import google
-from google import genai
-from google.genai.types import Content, FunctionDeclaration, LiveConnectConfig, Tool
-from langchain_google_vertexai import VertexAIEmbeddings
 import vertexai
+from google import genai
+from google.genai.types import LiveConnectConfig, Content, FunctionDeclaration, Tool
+from langchain_google_vertexai import VertexAIEmbeddings
+
+from app.templates import SYSTEM_INSTRUCTION, FORMAT_DOCS
+from app.vector_store import get_vector_store
 
 # Constants
 VERTEXAI = os.getenv("VERTEXAI", "true").lower() == "true"

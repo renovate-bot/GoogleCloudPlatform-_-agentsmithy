@@ -26,6 +26,7 @@ from app.utils.output_types import EndEvent, Event
 from app.utils.tracing import CloudTraceLoggingSpanExporter
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import logging as google_cloud_logging
 from traceloop.sdk import Instruments, Traceloop
 
@@ -44,10 +45,6 @@ from traceloop.sdk import Instruments, Traceloop
 
 # The events that are supported by the UI Frontend
 SUPPORTED_EVENTS = [
-    "on_tool_start",
-    "on_tool_end",
-    "on_retriever_start",
-    "on_retriever_end",
     "on_chat_model_stream",
 ]
 
@@ -55,6 +52,20 @@ SUPPORTED_EVENTS = [
 app = FastAPI()
 logging_client = google_cloud_logging.Client()
 logger = logging_client.logger(__name__)
+
+def configure_cors(app):
+    if not os.getenv("FRONTEND_URL"):
+        url = "http://localhost:4200"
+    else:
+        url = os.getenv("FRONTEND_URL")
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[url],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Initialize Traceloop
 try:
@@ -108,13 +119,14 @@ async def collect_feedback(feedback_dict: Feedback) -> None:
     logger.log_struct(feedback_dict.model_dump(), severity="INFO")
 
 
-@app.post("/stream_events")
+@app.post("/chats")
 async def stream_chat_events(request: Input) -> StreamingResponse:
     """Stream chat events in response to an input request."""
     return StreamingResponse(
         stream_event_response(input_chat=request.input), media_type="text/event-stream"
     )
 
+configure_cors(app)
 
 # Main execution
 if __name__ == "__main__":
