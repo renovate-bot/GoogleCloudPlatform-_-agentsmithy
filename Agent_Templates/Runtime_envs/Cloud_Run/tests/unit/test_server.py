@@ -127,7 +127,7 @@ def test_redirect_root_to_docs() -> None:
 @pytest.mark.asyncio
 async def test_stream_chat_events() -> None:
     """
-    Test the stream_events endpoint to ensure it correctly handles
+    Test the chats endpoint to ensure it correctly handles
     streaming responses and generates the expected events.
     """
     from app.server import app
@@ -157,7 +157,7 @@ async def test_stream_chat_events() -> None:
             "app.server.Traceloop.set_association_properties"
         ):
             async with AsyncClient(app=app, base_url="http://test") as ac:
-                response = await ac.post("/stream_events", json=input_data)
+                response = await ac.post("/chats", json=input_data)
 
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"

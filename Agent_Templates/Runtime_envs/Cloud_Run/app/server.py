@@ -30,19 +30,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import logging as google_cloud_logging
 from traceloop.sdk import Instruments, Traceloop
 
-# Default chain
-# from app.chain import chain
-
-# Or choose one of the following pattern chains to test by uncommenting it:
-
-# Custom RAG QA
-# from app.patterns.custom_rag_qa.chain import chain
-
-# LangGraph dummy agent
-# from app.patterns.langgraph_dummy_agent.chain import chain
-
-# Or explore other patterns in the 'app/patterns' folder
-
 # The events that are supported by the UI Frontend
 SUPPORTED_EVENTS = [
     "on_chat_model_stream",

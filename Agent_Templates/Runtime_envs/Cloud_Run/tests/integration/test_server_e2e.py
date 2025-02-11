@@ -32,7 +32,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 BASE_URL = "http://127.0.0.1:8000/"
-STREAM_EVENTS_URL = BASE_URL + "stream_events"
+STREAM_EVENTS_URL = BASE_URL + "chats"
 FEEDBACK_URL = BASE_URL + "feedback"
 
 HEADERS = {"Content-Type": "application/json"}
