@@ -47,11 +47,11 @@ class ChatStreamUser(HttpUser):
         start_time = time.time()
 
         with self.client.post(
-            "/stream_events",
+            "/chats",
             headers=headers,
             json=data,
             catch_response=True,
-            name="/stream_events first event",
+            name="/chats first event",
             stream=True,
         ) as response:
             if response.status_code == 200:
@@ -73,7 +73,7 @@ class ChatStreamUser(HttpUser):
                     response.success()
                     self.environment.events.request.fire(
                         request_type="POST",
-                        name="/stream_events end",
+                        name="/chats end",
                         response_time=total_time * 1000,  # Convert to milliseconds
                         response_length=len(json.dumps(events)),
                         response=response,
