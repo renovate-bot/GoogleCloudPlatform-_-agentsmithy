@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# flake8: noqa: W291
 
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -19,7 +18,7 @@ from langchain_core.prompts import (
     PromptTemplate,
 )
 
-template_docs = PromptTemplate.from_template(
+format_docs = PromptTemplate.from_template(
     """## Context provided:
 {% for doc in docs%}
 <Document {{ loop.index0 }}>
@@ -34,8 +33,8 @@ inspect_conversation_template = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            """You are an AI assistant tasked with analyzing the conversation "
-and determining the best course of action.""",
+            """You are an AI assistant tasked with analyzing the conversation"""
+            """ and determining the best course of action.""",
         ),
         MessagesPlaceholder(variable_name="messages"),
     ]

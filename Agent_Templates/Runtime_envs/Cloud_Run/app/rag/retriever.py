@@ -24,7 +24,6 @@ def get_retriever(
     project_id: str,
     data_store_id: str,
     agent_builder_location: str,
-    embedding: VertexAIEmbeddings,
 ) -> VertexAISearchRetriever:
     """
     Creates and returns an instance of the retriever service.
@@ -41,16 +40,7 @@ def get_retriever(
         project_id=project_id,
         data_store_id=data_store_id,
         location_id=agent_builder_location,
-        engine_data_type=1,
-        # The following parameters are used when you want to search
-        # using custom embeddings in Agent Builder.
-        # The ratio is set to 0.5 by default to use a mix of custom
-        # embeddings but you can adapt the ratio as you need.
-        custom_embedding_ratio=0.5,
-        custom_embedding=embedding,
-        custom_embedding_field_path="embedding",
-        # Extracting 20 documents before re-rank.
-        max_documents=20,
+        engine_data_type=0,
     )
 
 
