@@ -28,10 +28,9 @@ gemini_15_chat_llm = ChatVertexAI(
 )
 
 def get_model_obj_from_string(model_name: str):
-    match model_name:
-        case GEMINI_FLASH_20_LATEST:
-            return gemini_20_chat_llm
-        case GEMINI_PRO_15_LATEST:
-            return gemini_15_chat_llm
-        case _:
-            raise ValueError(f'Model Name {model_name} is not currently supported.')
+    if model_name == GEMINI_FLASH_20_LATEST:
+        return gemini_20_chat_llm
+    elif model_name == GEMINI_PRO_15_LATEST:
+        return gemini_15_chat_llm
+    else:
+        raise ValueError(f'Model Name {model_name} is not currently supported.')

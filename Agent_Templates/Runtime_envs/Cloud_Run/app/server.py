@@ -20,7 +20,7 @@ import os
 from typing import AsyncGenerator
 import uuid
 
-from app.chain import chain
+# from app.chain import chain
 from app.orchestration.agent import AgentManager
 from app.utils.input_types import Feedback, Input, InputChat, default_serialization
 from app.utils.output_types import EndEvent, Event
