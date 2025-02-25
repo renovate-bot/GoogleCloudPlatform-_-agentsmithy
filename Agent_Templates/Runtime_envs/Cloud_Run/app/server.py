@@ -73,32 +73,30 @@ async def stream_event_response(input_chat: InputChat) -> AsyncGenerator[str, No
     """Stream events in response to an input chat."""
     run_id = uuid.uuid4()
     input_dict = input_chat.model_dump()
-    print(input_dict)
-    # response = agent.invoke(
-    #     prompt=input_dict["event"],
-    #     session_id=input_dict["session_id"],
-    # )
 
-    # Traceloop.set_association_properties(
-    #     {
-    #         "log_type": "tracing",
-    #         "run_id": str(run_id),
-    #         "user_id": input_dict["user_id"],
-    #         "session_id": input_dict["session_id"],
-    #         "commit_sha": os.environ.get("COMMIT_SHA", "None"),
-    #     }
-    # )
+    Traceloop.set_association_properties(
+        {
+            "log_type": "tracing",
+            "run_id": str(run_id),
+            "user_id": input_dict["user_id"],
+            "session_id": input_dict["session_id"],
+            "commit_sha": os.environ.get("COMMIT_SHA", "None"),
+        }
+    )
 
-    # yield json.dumps(
-    #     Event(event="metadata", data={"run_id": str(run_id)}),
-    #     default=default_serialization,
-    # ) + "\n"
+    yield json.dumps(
+        Event(event="metadata", data={"run_id": str(run_id)}),
+        default=default_serialization,
+    ) + "\n"
 
     # async for data in chain.astream_events(input_dict, version="v2"):
     #     if data["event"] in SUPPORTED_EVENTS:
     #         yield json.dumps(data, default=default_serialization) + "\n"
 
-    # yield json.dumps(EndEvent(), default=default_serialization) + "\n"
+    async for data in agent.astream(input_dict):
+        yield json.dumps(data, default=default_serialization) + "\n"
+
+    yield json.dumps(EndEvent(), default=default_serialization) + "\n"
 
 
 # Routes

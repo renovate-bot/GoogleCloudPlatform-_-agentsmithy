@@ -6,6 +6,9 @@
 
 """Module used to define and interact with agent orchestrators."""
 
+import asyncio
+from typing import AsyncGenerator, Dict, Any
+
 import langchain
 from langgraph.prebuilt import create_react_agent
 from vertexai.generative_models import ResponseValidationError
@@ -21,6 +24,7 @@ from app.orchestration.enums import (
 from app.orchestration.models import (
     get_model_obj_from_string
 )
+from app.utils.output_types import OnChatModelStreamEvent, OnToolEndEvent
 
 
 class AgentManager():
@@ -64,56 +68,91 @@ class AgentManager():
             raise ValueError(f'Orchestration Framework {OrchestrationFramework} is not currently supported.')
 
 
-    def invoke(self,
-               prompt: str,
-               session_id: str,
-               stream: bool = False,
-               ignore_response_validation: bool = True,
-               max_retries: int = 10) -> list:
-        """Invokes the Agent.
+    # def invoke(self,
+    #            prompt: str,
+    #            session_id: str,
+    #            stream: bool = False,
+    #            ignore_response_validation: bool = True,
+    #            max_retries: int = 10) -> list:
+    #     """Invokes the Agent.
+
+    #     Args:
+    #         prompt: The end-user question that was asked.
+    #         session_id: The session id.
+    #         stream: Boolean determining whether to stream response or use invoke directly.
+    #         ignore_response_validation: When to retry again if a ResponseValidationError
+    #             is encountered.
+    #         max_retries: Max number of retries if a ResponseValidationError is encountered.
+    #     """
+    #     response = []
+    #     input_prompt = {'input': prompt}
+    #     config = {'configurable': {'session_id': session_id}}
+
+    #     if ignore_response_validation:
+    #         for _ in range(max_retries):
+    #             try:
+    #                 if stream:
+    #                     response = self.agent_executor.stream(
+    #                         input_prompt,
+    #                         config=config)
+    #                 else:
+    #                     response = self.agent_executor.invoke(
+    #                         input_prompt,
+    #                         config=config)
+    #                 break
+    #             except ResponseValidationError as e:
+    #                 # Try again
+    #                 print(f'Issue encountered {e}')
+    #                 pass
+
+    #         if not response:
+    #             raise Exception('Max retries reached, please check you prompt before trying again.')
+    #     else:
+    #         try:
+    #             if stream:
+    #                 response = self.agent_executor.stream(
+    #                     input_prompt,
+    #                     config=config)
+    #             else:
+    #                 response = self.agent_executor.invoke(
+    #                     input_prompt,
+    #                     config=config)
+    #         except Exception as e:
+    #             raise Exception(f'An error occurred when calling the agent. {e}')
+
+    #     return response
+
+    async def astream(
+        self,
+        input: Dict[str, Any],
+        max_retries: int = 10,
+    ) -> AsyncGenerator[Dict, Any]:
+        """Asynchronously event streams the Agent output.
 
         Args:
+            agent_executor: The agent executor instance.
             prompt: The end-user question that was asked.
             session_id: The session id.
-            stream: Boolean determining whether to stream response or use invoke directly.
-            ignore_response_validation: When to retry again if a ResponseValidationError 
-                is encountered.
             max_retries: Max number of retries if a ResponseValidationError is encountered.
+
+        Yields:
+            Dictionaries representing the streamed agent output.
         """
-        response = []
-        input_prompt = {'input': prompt}
-        config = {'configurable': {'session_id': session_id}}
+        print(input)
 
-        if ignore_response_validation:
-            for _ in range(max_retries):
-                try:
-                    if stream:
-                        response = self.agent_executor.stream(
-                            input_prompt, 
-                            config=config)
-                    else:
-                        response = self.agent_executor.invoke(
-                            input_prompt, 
-                            config=config)
-                    break
-                except ResponseValidationError as e:
-                    # Try again
-                    print(f'Issue encountered {e}')
-                    pass
-
-            if not response:
-                raise Exception('Max retries reached, please check you prompt before trying again.')
-        else:
+        for attempt in range(max_retries):
             try:
-                if stream:
-                    response = self.agent_executor.stream(
-                        input_prompt, 
-                        config=config)
-                else:
-                    response = self.agent_executor.invoke(
-                        input_prompt, 
-                        config=config)
+                async for chunk in self.agent_executor.astream(input, stream_mode="messages"):
+                    print(f"Yielding chunk: {chunk}")
+                    yield chunk
+                return  # Exit the loop if successful
+            except ResponseValidationError as e:
+                print(f"Issue encountered: {e} - Attempt {attempt + 1} of {max_retries}")
+                await asyncio.sleep(1)  # Add a small delay before retrying
+                continue  # Retry
             except Exception as e:
-                raise Exception(f'An error occurred when calling the agent. {e}')
+                print(f"Unexpected error: {e}")
+                raise
 
-        return response
+        # If all retries fail
+        raise Exception("Max retries reached, please check your prompt before trying again.")
