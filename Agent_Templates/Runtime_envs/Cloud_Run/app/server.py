@@ -68,6 +68,7 @@ except Exception as e:
 
 # TODO: needs to be dynamic
 agent = AgentManager()
+print(agent.tools)
 
 async def stream_event_response(input_chat: InputChat) -> AsyncGenerator[str, None]:
     """Stream events in response to an input chat."""

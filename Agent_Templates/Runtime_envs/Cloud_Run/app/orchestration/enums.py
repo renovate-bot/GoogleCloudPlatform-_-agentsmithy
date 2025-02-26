@@ -15,7 +15,7 @@ class OrchestrationFramework(Enum):
     VERTEX_AI_REASONING_ENGINE_LANCHAIN_AGENT = 'vertex_ai_reasoning_engine_langchain_agent'
     # VERTEX_AI_AGENT_FRAMEWORK_AGENT = 'vertex_ai_agent_framework_agent' # Future
 
-class IndustryTypes(Enum):
+class IndustryType(Enum):
     """Enum representing the available Langchain agent options."""
 
     FINANCE_INDUSTRY = 'finance'

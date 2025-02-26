@@ -2,8 +2,13 @@ google-cloud-aiplatform
 google-cloud-discoveryengine
 langchain
 langchain-community
-langchain-google-genai
 langchain-google-vertexai
 pydantic
-vertexai
 langgraph
+yfinance
+xmltodict
+google-search-results
+ionic-langchain
+wikipedia
+mediawikiapi
+wikibase-rest-api-client

@@ -9,22 +9,19 @@
 import asyncio
 from typing import AsyncGenerator, Dict, Any
 
-import langchain
+# from langchain_community.agent_toolkits.load_tools import load_tools
 from langgraph.prebuilt import create_react_agent
 from vertexai.generative_models import ResponseValidationError
 from vertexai.preview import reasoning_engines
 
-from app.orchestration.constants import (
-    GEMINI_FLASH_20_LATEST
-)
+from app.orchestration.constants import GEMINI_FLASH_20_LATEST
 from app.orchestration.enums import (
+    IndustryType,
     OrchestrationFramework
 )
-# from app.orchestration.tools import get_tools
-from app.orchestration.models import (
-    get_model_obj_from_string
-)
-from app.utils.output_types import OnChatModelStreamEvent, OnToolEndEvent
+from app.orchestration.tools import get_tools
+from app.orchestration.models import get_model_obj_from_string
+# from app.utils.output_types import OnChatModelStreamEvent, OnToolEndEvent
 
 
 class AgentManager():
@@ -32,6 +29,7 @@ class AgentManager():
 
     def __init__(
         self,
+        industry_type: str = IndustryType.FINANCE_INDUSTRY.value,
         orchestration_framework: str = OrchestrationFramework.LANGCHAIN_REACT_AGENT.value,
         model_name: str = GEMINI_FLASH_20_LATEST,
         return_steps: bool = False,
@@ -39,15 +37,16 @@ class AgentManager():
         """Constructs a custom agent with the specified configuration.
 
         Args:
-            agent_type: The type of agent to use.
-            base_llm: The LLM to use for the  agent.
+            industry_type: The agent industry type to use. Correlates to tool configs.
+            orchestration_framework: The type of agent framework to use.
+            model_name: The name of the LLM to use for the  agent.
             return_steps: Whether to return the agent's trajectory of intermediate
                 steps at the end in addition to the final output.
             verbose: Whether or not run in verbose mode. In verbose mode, some intermediate
                 logs will be printed to the console.
         """
-        # self.tools = get_tools()
-        self.tools = [] # TODO
+        # self.tools = get_tools(industry_type)
+        self.tools = get_tools('healthcare')
         self.model_name = model_name
         self.model_obj = get_model_obj_from_string(self.model_name)
 
@@ -67,60 +66,6 @@ class AgentManager():
         else:
             raise ValueError(f'Orchestration Framework {OrchestrationFramework} is not currently supported.')
 
-
-    # def invoke(self,
-    #            prompt: str,
-    #            session_id: str,
-    #            stream: bool = False,
-    #            ignore_response_validation: bool = True,
-    #            max_retries: int = 10) -> list:
-    #     """Invokes the Agent.
-
-    #     Args:
-    #         prompt: The end-user question that was asked.
-    #         session_id: The session id.
-    #         stream: Boolean determining whether to stream response or use invoke directly.
-    #         ignore_response_validation: When to retry again if a ResponseValidationError
-    #             is encountered.
-    #         max_retries: Max number of retries if a ResponseValidationError is encountered.
-    #     """
-    #     response = []
-    #     input_prompt = {'input': prompt}
-    #     config = {'configurable': {'session_id': session_id}}
-
-    #     if ignore_response_validation:
-    #         for _ in range(max_retries):
-    #             try:
-    #                 if stream:
-    #                     response = self.agent_executor.stream(
-    #                         input_prompt,
-    #                         config=config)
-    #                 else:
-    #                     response = self.agent_executor.invoke(
-    #                         input_prompt,
-    #                         config=config)
-    #                 break
-    #             except ResponseValidationError as e:
-    #                 # Try again
-    #                 print(f'Issue encountered {e}')
-    #                 pass
-
-    #         if not response:
-    #             raise Exception('Max retries reached, please check you prompt before trying again.')
-    #     else:
-    #         try:
-    #             if stream:
-    #                 response = self.agent_executor.stream(
-    #                     input_prompt,
-    #                     config=config)
-    #             else:
-    #                 response = self.agent_executor.invoke(
-    #                     input_prompt,
-    #                     config=config)
-    #         except Exception as e:
-    #             raise Exception(f'An error occurred when calling the agent. {e}')
-
-    #     return response
 
     async def astream(
         self,
@@ -143,7 +88,6 @@ class AgentManager():
         for attempt in range(max_retries):
             try:
                 async for chunk in self.agent_executor.astream(input, stream_mode="messages"):
-                    print(f"Yielding chunk: {chunk}")
                     yield chunk
                 return  # Exit the loop if successful
             except ResponseValidationError as e:
