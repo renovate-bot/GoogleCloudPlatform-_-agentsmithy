@@ -4,6 +4,9 @@ VERTEX_AI_LOCATION: us-central1
 AGENT_BUILDER_LOCATION: us
 DATA_STORE_ID: agentsmithy-datastores-finance_1739281497314
 
+# Server Details
+FRONTEND_URL: https://test-chatbot-ui-599247973214.us-central1.run.app
+
 # User Configuration Selection
 AGENT_INDUSTRY_TYPE: finance
 AGENT_ORCHESTRATION_FRAMEWORK: langchain_react_agent
