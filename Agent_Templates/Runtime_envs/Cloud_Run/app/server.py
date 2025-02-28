@@ -22,6 +22,11 @@ import uuid
 
 # from app.chain import chain
 from app.orchestration.agent import AgentManager
+from app.orchestration.config import (
+    AGENT_INDUSTRY_TYPE,
+    AGENT_ORCHESTRATION_FRAMEWORK
+)
+from app.orchestration.utils import get_init_prompt
 from app.utils.input_types import Feedback, Input, InputChat, default_serialization
 from app.utils.output_types import EndEvent, Event
 from app.utils.tracing import CloudTraceLoggingSpanExporter
@@ -66,9 +71,13 @@ try:
 except Exception as e:
     logging.error("Failed to initialize Traceloop: %s", e)
 
-# TODO: needs to be dynamic
-agent = AgentManager()
-print(agent.tools)
+# Set up the agent backed on environment variables for user config
+init_prompt = get_init_prompt(AGENT_INDUSTRY_TYPE)
+agent = AgentManager(
+    prompt=init_prompt,
+    orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK
+)
+# print(agent.tools)
 
 async def stream_event_response(input_chat: InputChat) -> AsyncGenerator[str, None]:
     """Stream events in response to an input chat."""

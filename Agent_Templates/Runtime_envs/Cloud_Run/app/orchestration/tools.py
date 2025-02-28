@@ -5,10 +5,8 @@
 # ==============================================================================
 
 """Module that contains various tool definitions."""
-import os
 from typing import List
 
-import google
 # from ionic_langchain.tool import IonicTool
 from langchain_core.documents import Document
 from langchain_core.tools import tool
@@ -23,26 +21,27 @@ from langchain_community.utilities.google_trends import GoogleTrendsAPIWrapper
 from langchain_community.utilities.google_finance import GoogleFinanceAPIWrapper
 import vertexai
 
+from app.orchestration.config import (
+    PROJECT_ID,
+    AGENT_BUILDER_LOCATION,
+    DATA_STORE_ID,
+    SERP_API_KEY
+)
 from app.orchestration.enums import IndustryType
 from app.orchestration.models import gemini_20_chat_llm
 from app.rag.templates import format_docs
 from app.rag.retriever import get_compressor, get_retriever
 
-SERP_API_KEY = os.environ.get("SERPER_API_KEY", "unset")
-VERTEX_AI_LOCATION = os.getenv("REGION", "us-central1")
-AGENT_BUILDER_LOCATION = os.getenv("AGENT_BUILDER_LOCATION", "us")
-DATA_STORE_ID = os.getenv("DATA_STORE_ID", "unset") # This is dependent on the industry
 
-# Initialize Google Cloud and Vertex AI
-credentials, project_id = google.auth.default()
-vertexai.init(project=project_id)
+# Initialize Vertex AI
+vertexai.init(project=PROJECT_ID)
 
 retriever = get_retriever(
-    project_id=project_id,
+    project_id=PROJECT_ID,
     data_store_id=DATA_STORE_ID,
     agent_builder_location=AGENT_BUILDER_LOCATION,
 )
-compressor = get_compressor(project_id=project_id)
+compressor = get_compressor(project_id=PROJECT_ID)
 
 @tool(response_format="content_and_artifact")
 def retrieve_info(query: str) -> tuple[str, List[Document]]:
@@ -164,10 +163,11 @@ def should_continue() -> None:
 
 def fallback(query: str) -> str:
     """
-    Use this tool if you determine that you do not have enough context to respond to the questions of the user.
-    This tool will attempt to answer the question using Gemini knowledge.
+    Only use this tool if you have tried other tools and still do not have enough context to respond to 
+    the questions of the user.
+    This tool will attempt to answer the question using Google Gemini.
     """
-    response = gemini_20_chat_llm.invoke(query)
+    response = gemini_20_chat_llm.stream(query)
     return response
 
 def get_tools(industry_type: str = None) -> list:
@@ -194,7 +194,7 @@ def get_tools(industry_type: str = None) -> list:
         tools_list.append(retrieve_info)
 
     tools_list.extend([
-        fallback,
+        # fallback,
         should_continue
     ])
     return tools_list

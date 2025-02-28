@@ -9,7 +9,7 @@
 import asyncio
 from typing import AsyncGenerator, Dict, Any
 
-# from langchain_community.agent_toolkits.load_tools import load_tools
+from langchain_core.messages import AIMessageChunk, ToolMessage, AIMessage
 from langgraph.prebuilt import create_react_agent
 from vertexai.generative_models import ResponseValidationError
 from vertexai.preview import reasoning_engines
@@ -21,7 +21,7 @@ from app.orchestration.enums import (
 )
 from app.orchestration.tools import get_tools
 from app.orchestration.models import get_model_obj_from_string
-# from app.utils.output_types import OnChatModelStreamEvent, OnToolEndEvent
+from app.utils.output_types import OnChatModelStreamEvent, ChatModelStreamData
 
 
 class AgentManager():
@@ -29,6 +29,7 @@ class AgentManager():
 
     def __init__(
         self,
+        prompt: str,
         industry_type: str = IndustryType.FINANCE_INDUSTRY.value,
         orchestration_framework: str = OrchestrationFramework.LANGCHAIN_REACT_AGENT.value,
         model_name: str = GEMINI_FLASH_20_LATEST,
@@ -37,6 +38,7 @@ class AgentManager():
         """Constructs a custom agent with the specified configuration.
 
         Args:
+            prompt: System instructions to give to the agent.
             industry_type: The agent industry type to use. Correlates to tool configs.
             orchestration_framework: The type of agent framework to use.
             model_name: The name of the LLM to use for the  agent.
@@ -45,26 +47,29 @@ class AgentManager():
             verbose: Whether or not run in verbose mode. In verbose mode, some intermediate
                 logs will be printed to the console.
         """
-        # self.tools = get_tools(industry_type)
-        self.tools = get_tools('healthcare')
+        self.prompt = prompt
+        self.tools = get_tools(industry_type)
         self.model_name = model_name
         self.model_obj = get_model_obj_from_string(self.model_name)
 
         if orchestration_framework == OrchestrationFramework.LANGCHAIN_REACT_AGENT.value:
             self.agent_executor = create_react_agent(
+                prompt=self.prompt,
                 model=self.model_obj,
                 tools=self.tools,
                 debug=verbose
             )
+        # TODO: this needs work - will not be compatible with the below astream function
         elif orchestration_framework == OrchestrationFramework.VERTEX_AI_REASONING_ENGINE_LANCHAIN_AGENT.value:
             self.agent_executor = reasoning_engines.LangchainAgent(
+                prompt=self.prompt,
                 model=self.model_name,
                 model_kwargs={'temperature': 0},
                 tools=self.tools,
                 agent_executor_kwargs={'return_intermediate_steps': return_steps}
             )
         else:
-            raise ValueError(f'Orchestration Framework {OrchestrationFramework} is not currently supported.')
+            raise ValueError(f'Orchestration Framework {orchestration_framework} is not currently supported.')
 
 
     async def astream(
@@ -83,12 +88,20 @@ class AgentManager():
         Yields:
             Dictionaries representing the streamed agent output.
         """
-        print(input)
-
         for attempt in range(max_retries):
             try:
                 async for chunk in self.agent_executor.astream(input, stream_mode="messages"):
-                    yield chunk
+                    message = chunk[0]
+                    if isinstance(message, (AIMessageChunk, AIMessage)):
+                        stream_data = ChatModelStreamData(chunk=message)
+                        yield OnChatModelStreamEvent(data=stream_data)
+                    elif isinstance(message, ToolMessage):
+                        # TODO: Implement something like this:
+                        # stream_data = ToolMessageStreamData(tool_call_id=message.tool_call_id, result=message.content)
+                        # yield OnToolMessageStreamEvent(data=stream_data)
+                        print(f"ToolMessage received: {message.content}")
+                        continue
+
                 return  # Exit the loop if successful
             except ResponseValidationError as e:
                 print(f"Issue encountered: {e} - Attempt {attempt + 1} of {max_retries}")
