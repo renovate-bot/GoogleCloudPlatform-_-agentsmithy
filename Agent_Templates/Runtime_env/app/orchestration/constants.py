@@ -5,6 +5,7 @@
 # ==============================================================================
 """Module that contains various constants."""
 
+# Supported Models:
 GEMINI_FLASH_20_LATEST = 'gemini-2.0-flash'
 GEMINI_PRO_15_LATEST = 'gemini-1.5-pro'
 

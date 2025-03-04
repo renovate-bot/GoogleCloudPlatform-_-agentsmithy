@@ -20,21 +20,20 @@ import os
 from typing import AsyncGenerator
 import uuid
 
-# from app.chain import chain
-from app.orchestration.agent import AgentManager
-from app.orchestration.config import (
-    AGENT_INDUSTRY_TYPE,
-    AGENT_ORCHESTRATION_FRAMEWORK
-)
-from app.orchestration.utils import get_init_prompt
-from app.utils.input_types import Feedback, Input, InputChat, default_serialization
-from app.utils.output_types import EndEvent, Event
-from app.utils.tracing import CloudTraceLoggingSpanExporter
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import logging as google_cloud_logging
 from traceloop.sdk import Instruments, Traceloop
+
+from app.orchestration.config import (
+    AGENT_INDUSTRY_TYPE,
+    AGENT_ORCHESTRATION_FRAMEWORK
+)
+from app.orchestration.utils import get_agent_from_config
+from app.utils.input_types import Feedback, Input, InputChat, default_serialization
+from app.utils.output_types import EndEvent, Event
+from app.utils.tracing import CloudTraceLoggingSpanExporter
 
 # The events that are supported by the UI Frontend
 SUPPORTED_EVENTS = [
@@ -71,13 +70,12 @@ try:
 except Exception as e:
     logging.error("Failed to initialize Traceloop: %s", e)
 
-# Set up the agent backed on environment variables for user config
-init_prompt = get_init_prompt(AGENT_INDUSTRY_TYPE)
-agent = AgentManager(
-    prompt=init_prompt,
-    orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK
+# Get agent based on user selection
+agent_manager = get_agent_from_config(
+    # agent_orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK,
+    agent_orchestration_framework='langchain_prebuilt_agent',
+    industry_type=AGENT_INDUSTRY_TYPE,
 )
-# print(agent.tools)
 
 async def stream_event_response(input_chat: InputChat) -> AsyncGenerator[str, None]:
     """Stream events in response to an input chat."""
@@ -103,7 +101,7 @@ async def stream_event_response(input_chat: InputChat) -> AsyncGenerator[str, No
     #     if data["event"] in SUPPORTED_EVENTS:
     #         yield json.dumps(data, default=default_serialization) + "\n"
 
-    async for data in agent.astream(input_dict):
+    async for data in agent_manager.astream(input_dict):
         yield json.dumps(data, default=default_serialization) + "\n"
 
     yield json.dumps(EndEvent(), default=default_serialization) + "\n"

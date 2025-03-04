@@ -28,7 +28,7 @@ from app.orchestration.config import (
     SERP_API_KEY
 )
 from app.orchestration.enums import IndustryType
-from app.orchestration.models import gemini_20_chat_llm
+# from app.orchestration.models import gemini_20_chat_llm
 from app.rag.templates import format_docs
 from app.rag.retriever import get_compressor, get_retriever
 
@@ -161,14 +161,14 @@ def should_continue() -> None:
     """
     return None
 
-def fallback(query: str) -> str:
-    """
-    Only use this tool if you have tried other tools and still do not have enough context to respond to 
-    the questions of the user.
-    This tool will attempt to answer the question using Google Gemini.
-    """
-    response = gemini_20_chat_llm.stream(query)
-    return response
+# def fallback(query: str) -> str:
+#     """
+#     Only use this tool if you have tried other tools and still do not have enough context to respond to 
+#     the questions of the user.
+#     This tool will attempt to answer the question using Google Gemini.
+#     """
+#     response = gemini_20_chat_llm.stream(query)
+#     return response
 
 def get_tools(industry_type: str = None) -> list:
     """Grabs a list of tools based on the user's configselection"""
