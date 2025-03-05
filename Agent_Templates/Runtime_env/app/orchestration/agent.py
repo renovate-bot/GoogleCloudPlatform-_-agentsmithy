@@ -13,15 +13,16 @@ from google.api_core import exceptions
 from langchain.agents import (
     AgentExecutor,
     create_react_agent as langchain_create_react_agent
-) 
+)
 from langchain_core.messages import AIMessageChunk, ToolMessage, AIMessage
 from langchain_google_vertexai import ChatVertexAI
 from langgraph.prebuilt import create_react_agent as langgraph_create_react_agent
-from vertexai.preview import reasoning_engines
+from vertexai.preview import reasoning_engines # TODO: update this when it becomes agent engine
 
 from app.orchestration.constants import GEMINI_FLASH_20_LATEST
 from app.orchestration.enums import OrchestrationFramework
 from app.orchestration.tools import get_tools
+from app.utils.export_requirements import get_requirements_from_toml
 from app.utils.output_types import OnChatModelStreamEvent, ChatModelStreamData
 
 
@@ -157,7 +158,7 @@ class LangChainPrebuiltAgentManager(BaseAgentManager):
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
         return_steps: Optional[bool] = False,
-        verbose: Optional[bool] = False
+        verbose: Optional[bool] = True
     ):
         super().__init__(
             prompt=prompt,
@@ -228,11 +229,11 @@ class LangGraphPrebuiltAgentManager(BaseAgentManager):
         model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
         max_retries: Optional[int] = 6,
         max_output_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
+        temperature: Optional[float] = 0,
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
         return_steps: Optional[bool] = False,
-        verbose: Optional[bool] = False
+        verbose: Optional[bool] = True
     ):
         super().__init__(
             prompt=prompt,
@@ -311,7 +312,7 @@ class LangChainVertexAIReasoningEngineAgentManager(BaseAgentManager):
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
         return_steps: Optional[bool] = False,
-        verbose: Optional[bool] = False
+        verbose: Optional[bool] = True
     ):
          super().__init__(
             prompt=prompt,
@@ -332,12 +333,14 @@ class LangChainVertexAIReasoningEngineAgentManager(BaseAgentManager):
         """
         Creates a Vertex AI Reasoning Engine Langchain Agent executor.
         """
-        return reasoning_engines.LangchainAgent(
+        langchain_agent = reasoning_engines.LangchainAgent(
             prompt=self.prompt,
             model=self.model_name,
             tools=self.tools,
             agent_executor_kwargs={'return_intermediate_steps': self.return_steps}
         )
+        langchain_agent.set_up()
+        return langchain_agent
 
 
     async def astream(
@@ -371,6 +374,30 @@ class LangChainVertexAIReasoningEngineAgentManager(BaseAgentManager):
             raise RuntimeError(f"Unexpected error. {e}") from e
 
 
+    def deploy_agent(self) -> reasoning_engines.ReasoningEngine:
+        """
+        Deploys the Vertex AI reasoning engine to a remote managed endpoint.
+
+        Returns:
+            Remote Reasoning Engine agent.
+
+        Exception:
+            An error is encountered during deployment.
+        """
+        try:
+            remote_agent = reasoning_engines.ReasoningEngine.create(
+                self.agent_executor,
+                requirements=get_requirements_from_toml(),
+                display_name="Test langchain agent",
+                description="This is a test langchain agent",
+                extra_packages=[],
+            )
+        except Exception as e:
+            raise RuntimeError(f"Error deploying Reasoning Engine Agent. {e}") from e
+
+        return remote_agent
+
+
 class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
     """
     AgentManager subclass for Vertex AI Reasoning Engine LangGraph orchestration.
@@ -386,7 +413,7 @@ class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
         return_steps: Optional[bool] = False,
-        verbose: Optional[bool] = False
+        verbose: Optional[bool] = True
     ):
          super().__init__(
             prompt=prompt,
@@ -408,10 +435,12 @@ class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
         Creates a Vertex AI Reasoning Engine Langchain Agent executor.
         """
         # prompt is not a param for reasoning_engines.LanggraphAgent
-        return reasoning_engines.LanggraphAgent(
+        langgraph_agent = reasoning_engines.LanggraphAgent(
             model=self.model_name,
             tools=self.tools,
         )
+        langgraph_agent.set_up()
+        return langgraph_agent
 
 
     async def astream(

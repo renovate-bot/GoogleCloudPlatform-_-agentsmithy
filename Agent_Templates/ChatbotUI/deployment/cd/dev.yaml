@@ -39,8 +39,8 @@ steps:
       - 'managed'
       - '--region'
       - 'us-central1'
-      # - '--env-vars-file'
-      # - 'deployment/env/dev.yaml'
+      - '--memory'
+      - '1G'
 
 options:
   substitution_option: 'ALLOW_LOOSE'

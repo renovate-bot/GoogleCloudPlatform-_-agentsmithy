@@ -46,14 +46,13 @@ logging_client = google_cloud_logging.Client()
 logger = logging_client.logger(__name__)
 
 def configure_cors(app):
-    if not os.getenv("FRONTEND_URL"):
-        url = "http://localhost:4200"
-    else:
-        url = os.getenv("FRONTEND_URL")
+    urls = ["http://localhost:4200"]
+    if os.getenv("FRONTEND_URL"):
+        urls.append(os.getenv("FRONTEND_URL"))
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[url],
+        allow_origins=urls,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -72,8 +71,7 @@ except Exception as e:
 
 # Get agent based on user selection
 agent_manager = get_agent_from_config(
-    # agent_orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK,
-    agent_orchestration_framework='langchain_prebuilt_agent',
+    agent_orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK,
     industry_type=AGENT_INDUSTRY_TYPE,
 )
 

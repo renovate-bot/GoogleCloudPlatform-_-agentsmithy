@@ -1,6 +1,7 @@
 # Project & Infra Details
 PROJECT_ID: agentsmithy-dev
 VERTEX_AI_LOCATION: us-central1
+GCS_STAGING_BUCKET: gs://agentsmithy_staging
 AGENT_BUILDER_LOCATION: us
 DATA_STORE_ID: agentsmithy-datastores-finance_1739281497314
 
@@ -10,6 +11,8 @@ FRONTEND_URL: https://test-chatbot-ui-599247973214.us-central1.run.app
 # User Configuration Selection
 AGENT_INDUSTRY_TYPE: finance
 AGENT_ORCHESTRATION_FRAMEWORK: langchain_react_agent
+USER_AGENT: agentsmithy-starter-agent
+AGENT_DESCRIPTION: "This is a test agent"
 
 # API Keys
 # SERP_API_KEY> todo

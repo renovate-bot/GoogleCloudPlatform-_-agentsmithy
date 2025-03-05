@@ -39,6 +39,8 @@ steps:
       - 'managed'
       - '--region'
       - 'us-central1'
+      - '--memory'
+      - '1G'
       - '--env-vars-file'
       - 'deployment/env/dev.yaml'
 

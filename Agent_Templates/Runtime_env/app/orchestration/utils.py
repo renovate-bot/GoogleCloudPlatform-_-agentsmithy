@@ -4,7 +4,6 @@
 # agreement with Google.
 # ==============================================================================
 """Module that contains various utility functions."""
-
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 
 from app.orchestration.agent import (
