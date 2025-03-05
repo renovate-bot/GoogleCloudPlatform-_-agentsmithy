@@ -46,9 +46,12 @@ logging_client = google_cloud_logging.Client()
 logger = logging_client.logger(__name__)
 
 def configure_cors(app):
-    urls = ["http://localhost:4200"]
-    if os.getenv("FRONTEND_URL"):
-        urls.append(os.getenv("FRONTEND_URL"))
+    # urls = ["http://localhost:4200"]
+    # if os.getenv("FRONTEND_URL"):
+    #     urls.append(os.getenv("FRONTEND_URL"))
+
+    # TODO: update with the actual urls when dev work is complete
+    urls = ["*"]
 
     app.add_middleware(
         CORSMiddleware,
