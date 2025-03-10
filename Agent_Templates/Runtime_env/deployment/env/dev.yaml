@@ -10,7 +10,7 @@ FRONTEND_URL: https://test-chatbot-ui-599247973214.us-central1.run.app
 
 # User Configuration Selection
 AGENT_INDUSTRY_TYPE: finance
-AGENT_ORCHESTRATION_FRAMEWORK: langchain_react_agent
+AGENT_ORCHESTRATION_FRAMEWORK: langgraph_prebuilt_agent
 USER_AGENT: agentsmithy-starter-agent
 AGENT_DESCRIPTION: "This is a test agent"
 

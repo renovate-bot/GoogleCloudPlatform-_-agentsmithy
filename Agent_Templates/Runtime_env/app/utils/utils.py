@@ -5,7 +5,10 @@
 # ==============================================================================
 """Module that contains a function for exporting toml package dependencies to
 requirements.txt format"""
+import os
+
 import toml
+import yaml
 
 def get_requirements_from_toml(pyproject_file="pyproject.toml"):
     """
@@ -23,7 +26,7 @@ def get_requirements_from_toml(pyproject_file="pyproject.toml"):
               if there's an error reading the file.
     """
     try:
-        with open(pyproject_file, "r") as f:
+        with open(pyproject_file, "r", encoding='utf-8') as f:
             data = toml.load(f)
 
         dependencies = data.get("tool", {}).get("poetry", {}).get("dependencies", {})
@@ -38,18 +41,15 @@ def get_requirements_from_toml(pyproject_file="pyproject.toml"):
                 continue
 
             if isinstance(version_info, str):
-                requirements.append(f"{package}{version_info}")  # Simple version spec
+                requirements.append(f"{package}>={version_info.replace('^', '')}")
 
             elif isinstance(version_info, dict):
                 version = version_info.get("version")
                 extras = version_info.get("extras")
 
-                if version:
-                    requirements.append(f"{package}{version}")
-
                 if extras:
                     extras_str = ",".join(extras)
-                    requirements.append(f"{package}[{extras_str}]")  # Handle extras
+                    requirements.append(f"{package}[{extras_str}]>={version.replace('^', '')}")
             else:
                 print(f"Warning: Unexpected dependency format for {package}: {version_info}")
 
@@ -64,3 +64,58 @@ def get_requirements_from_toml(pyproject_file="pyproject.toml"):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         return []
+
+
+def read_yaml_file(filepath: str) -> dict:
+    """Reads a yaml and returns file contents as a dict. Defaults to utf-8 encoding.
+
+    Args:
+        filepath (str): Path to the yaml.
+
+    Returns:
+        dict: Contents of the yaml.
+
+    Raises:
+        Exception: If an error is encountered reading the file.
+    """
+    try:
+        with open(filepath, "r", encoding="utf-8") as file:
+            file_dict = yaml.safe_load(file)
+        file.close()
+    except yaml.YAMLError as err:
+        raise yaml.YAMLError(f"Error reading file. {err}'") from err
+    return file_dict
+
+
+def load_env_from_yaml(filepath: str):
+    """
+    Loads environment variables from a YAML file and sets them in the os.environ.
+
+    Args:
+        filepath (str): The path to the YAML file containing the environment variables.
+
+    Raises:
+        FileNotFoundError: If the specified YAML file does not exist.
+        yaml.YAMLError: If there is an error parsing the YAML file.
+    """
+    try:
+        env_vars = read_yaml_file(filepath)
+
+        if env_vars is None:  # Handle empty YAML files
+            print(f"Warning: YAML file {filepath} is empty.")
+            return
+
+        if not isinstance(env_vars, dict):
+            raise TypeError(f"YAML file {filepath} must contain a dictionary at the top level.")
+
+        for key, value in env_vars.items():
+            if not isinstance(key, str):
+                raise TypeError(f"Key '{key}' in YAML file must be a string.")
+            if not isinstance(value, (str, int, float, bool, type(None))):
+                raise TypeError(f"Value for key '{key}' in YAML file must be a string, number, boolean, or None. Found type: {type(value)}")
+
+            # Convert value to string for setting in os.environ
+            os.environ[key] = str(value)
+
+    except FileNotFoundError:
+        raise FileNotFoundError(f"YAML file not found: {filepath}")

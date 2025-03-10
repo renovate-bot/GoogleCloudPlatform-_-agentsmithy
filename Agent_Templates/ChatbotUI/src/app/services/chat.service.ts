@@ -18,7 +18,9 @@ import { CreateChatRequest } from '../models/chat.model';
 import { environment } from 'src/environments/environment';
 import { SessionService } from './user/session.service';
 
-const chatsUrl = `${environment.backendURL}/chats`;
+// include "/" or ":" in the environment.ts file
+const chatsUrl = `${environment.backendURL}streamQuery`;
+
 
 @Injectable({
   providedIn: 'root'

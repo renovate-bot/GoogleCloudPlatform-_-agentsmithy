@@ -9,7 +9,7 @@ from typing import List
 
 # from ionic_langchain.tool import IonicTool
 from langchain_core.documents import Document
-from langchain_core.tools import tool
+from langchain_core.tools import StructuredTool
 from langchain_community.tools.pubmed.tool import PubmedQueryRun
 from langchain_community.tools.yahoo_finance_news import YahooFinanceNewsTool
 from langchain_community.tools.google_scholar import GoogleScholarQueryRun
@@ -27,8 +27,10 @@ from app.orchestration.config import (
     DATA_STORE_ID,
     SERP_API_KEY
 )
-from app.orchestration.enums import IndustryType
-# from app.orchestration.models import gemini_20_chat_llm
+from app.orchestration.enums import (
+    IndustryType,
+    OrchestrationFramework
+)
 from app.rag.templates import format_docs
 from app.rag.retriever import get_compressor, get_retriever
 
@@ -43,7 +45,7 @@ retriever = get_retriever(
 )
 compressor = get_compressor(project_id=PROJECT_ID)
 
-@tool(response_format="content_and_artifact")
+
 def retrieve_info(query: str) -> tuple[str, List[Document]]:
     """
     Try this tool first.
@@ -85,55 +87,44 @@ def retrieve_info(query: str) -> tuple[str, List[Document]]:
     formatted_docs = format_docs.format(docs=ranked_docs)
     return (formatted_docs, ranked_docs)
 
-@tool
+# # TODO:
+# from vertexai.generative_models import grounding, Tool
+
+# grounded_search_tool = Tool.from_google_search_retrieval(
+#     grounding.GoogleSearchRetrieval()
+# )
+
+
 def google_search_tool(query: str) -> str:
     """Uses Google Search to gather information from the internet."""
     search = GoogleSerperAPIWrapper()
     return search.run(query)
 
-@tool
+
 def google_scholar_tool(query: str) -> str:
     """Uses Google Scholar to answer complex technical questions."""
     google_scholar = GoogleScholarQueryRun(api_wrapper=GoogleScholarAPIWrapper())
     return google_scholar.invoke(query)
 
-@tool
+
 def google_trends_tool(query: str) -> str:
     """Uses Google Trends to get information on trending search results and news."""
     google_trends = GoogleTrendsQueryRun(api_wrapper=GoogleTrendsAPIWrapper())
     return google_trends.invoke(query)
 
-@tool
+
 def google_finance_tool(query: str) -> str:
     """Uses Google Finance to get information from the Google Finance page."""
     google_finance = GoogleFinanceQueryRun(api_wrapper=GoogleFinanceAPIWrapper())
     return google_finance.invoke(query)
 
-# @tool
-# def yahoo_finance_tool(query: str) -> str:
-#     """Uses Yahoo Finance to get real-time new and information on financial markets."""
-#     yahoo_finance = YahooFinanceNewsTool()
-#     print(query)
-#     stop
 
-    # prompt = f"""You are a helpful assistant who retrieves finance news. Based on
-    #             the users query, I would like you to pull out the stock ticker of
-    #             the company that the user is referencing. Respond with only the
-    #             stock ticker. If not company is mentioned, say "No company".
-    #             User query: {query}"""
-    # stock_ticker = gemini_20_chat_llm.invoke(prompt)
-    # print("stock_ticker:", stock_ticker)
+def yahoo_finance_tool(query: str) -> str:
+    """Uses Yahoo Finance to get real-time new and information on financial markets."""
+    yahoo_finance = YahooFinanceNewsTool()
+    return yahoo_finance.invoke(query)
 
-    # try:
-    #     response = yahoo_finance.invoke({"query": stock_ticker})
-    # except Exception as e:
-    #     new_prompt = f"{prompt}; correct for this error: {str(e)}"
-    #     stock_ticker = gemini_20_chat_llm.invoke(new_prompt)
-    #     print("new stock_ticker:", {"query": stock_ticker})
-    #     response = yahoo_finance.invoke(stock_ticker)
-    # return response
 
-@tool
 def medical_publications_tool(query: str) -> str:
     """Use this tool if the user asks very complicated medical questions
         that can only be answered by searching through medical publications
@@ -143,7 +134,7 @@ def medical_publications_tool(query: str) -> str:
     return pubmed.invoke(query)
 
 # `pip install ionic-langchain``
-# @tool
+
 # def retail_discovery_tool(query: str) -> str:
 #     """Ionic is an e-commerce shopping tool. Use this tool when the user is looking
 #         for a product recommendation or trying to find a specific product.
@@ -154,7 +145,7 @@ def medical_publications_tool(query: str) -> str:
 #     ionic = IonicTool()
 #     return ionic.tool().invoke(query)
 
-@tool
+
 def should_continue() -> None:
     """
     Use this tool if you determine that you have enough context to respond to the questions of the user.
@@ -170,12 +161,15 @@ def should_continue() -> None:
 #     response = gemini_20_chat_llm.stream(query)
 #     return response
 
-def get_tools(industry_type: str = None) -> list:
+def get_tools(
+        industry_type: str,
+        orchestration_framework: str
+    ) -> list:
     """Grabs a list of tools based on the user's configselection"""
 
     tools_list = []
     if industry_type == IndustryType.FINANCE_INDUSTRY.value:
-        tools_list.append(YahooFinanceNewsTool())
+        tools_list.append(yahoo_finance_tool)
     elif industry_type == IndustryType.HEALTHCARE_INDUSTRY.value:
         tools_list.append(medical_publications_tool)
     # elif industry_type == IndustryType.RETAIL_INDUSTRY.value:
@@ -197,4 +191,10 @@ def get_tools(industry_type: str = None) -> list:
         # fallback,
         should_continue
     ])
+
+    # If using langchain or langgraph, then the tools must be defined as structured tools
+    if (orchestration_framework == OrchestrationFramework.LANGCHAIN_PREBUILT_AGENT.value or
+        orchestration_framework == OrchestrationFramework.LANGGRAPH_PREBUILT_AGENT.value):
+        return [StructuredTool.from_function(tool) for tool in tools_list]
+
     return tools_list

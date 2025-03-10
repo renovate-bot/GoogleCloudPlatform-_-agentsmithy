@@ -2,13 +2,14 @@
 
 import vertexai
 
+from app.orchestration.agent import deploy_agent_to_reasoning_engine
 from app.orchestration.config import (
     AGENT_INDUSTRY_TYPE,
     PROJECT_ID,
     VERTEX_AI_LOCATION,
     GCS_STAGING_BUCKET
 )
-from app.orchestration.utils import get_agent_from_config
+from app.orchestration.server_utils import get_agent_from_config
 
 vertexai.init(
     project=PROJECT_ID,
@@ -19,8 +20,8 @@ vertexai.init(
 # Get agent based on user selection
 agent_manager = get_agent_from_config(
     # agent_orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK,
-    agent_orchestration_framework='langchain_vertex_ai_reasoning_engine_agent',
+    agent_orchestration_framework='langchain_prebuilt_agent',
     industry_type=AGENT_INDUSTRY_TYPE,
 )
 
-agent_manager.deploy_agent()
+deploy_agent_to_reasoning_engine(agent_manager)

@@ -17,7 +17,7 @@
 import json
 import logging
 import os
-from typing import AsyncGenerator
+from typing import Generator
 import uuid
 
 from fastapi import FastAPI
@@ -30,7 +30,7 @@ from app.orchestration.config import (
     AGENT_INDUSTRY_TYPE,
     AGENT_ORCHESTRATION_FRAMEWORK
 )
-from app.orchestration.utils import get_agent_from_config
+from app.orchestration.server_utils import get_agent_from_config
 from app.utils.input_types import Feedback, Input, InputChat, default_serialization
 from app.utils.output_types import EndEvent, Event
 from app.utils.tracing import CloudTraceLoggingSpanExporter
@@ -78,7 +78,7 @@ agent_manager = get_agent_from_config(
     industry_type=AGENT_INDUSTRY_TYPE,
 )
 
-async def stream_event_response(input_chat: InputChat) -> AsyncGenerator[str, None]:
+def stream_event_response(input_chat: InputChat):
     """Stream events in response to an input chat."""
     run_id = uuid.uuid4()
     input_dict = input_chat.model_dump()
@@ -98,12 +98,12 @@ async def stream_event_response(input_chat: InputChat) -> AsyncGenerator[str, No
         default=default_serialization,
     ) + "\n"
 
-    # async for data in chain.astream_events(input_dict, version="v2"):
-    #     if data["event"] in SUPPORTED_EVENTS:
-    #         yield json.dumps(data, default=default_serialization) + "\n"
-
-    async for data in agent_manager.astream(input_dict):
-        yield json.dumps(data, default=default_serialization) + "\n"
+    for data in agent_manager.stream_query(input_dict):
+        yield json.dumps(
+            Event(event="on_chat_model_stream", data={"chunk": data}),
+            # data,
+            default=default_serialization
+        ) + "\n"
 
     yield json.dumps(EndEvent(), default=default_serialization) + "\n"
 
@@ -121,7 +121,7 @@ async def collect_feedback(feedback_dict: Feedback) -> None:
     logger.log_struct(feedback_dict.model_dump(), severity="INFO")
 
 
-@app.post("/chats")
+@app.post("/streamQuery")
 async def stream_chat_events(request: Input) -> StreamingResponse:
     """Stream chat events in response to an input request."""
     return StreamingResponse(
