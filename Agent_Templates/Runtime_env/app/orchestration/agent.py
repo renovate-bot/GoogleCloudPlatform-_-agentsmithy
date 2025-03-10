@@ -19,9 +19,14 @@ from langchain_google_vertexai import ChatVertexAI
 from langgraph.prebuilt import create_react_agent as langgraph_create_react_agent
 from vertexai.preview import reasoning_engines # TODO: update this when it becomes agent engine
 
+# LlamaIndex
+from llama_index.core.agent import ReActAgent
+from llama_index.core.chat_engine.types import StreamingAgentChatResponse
+from llama_index.llms.langchain import LangChainLLM
+
 from app.orchestration.constants import GEMINI_FLASH_20_LATEST
 from app.orchestration.enums import OrchestrationFramework
-from app.orchestration.tools import get_tools
+from app.orchestration.tools import get_tools, get_llamaindex_tools
 from app.utils.export_requirements import get_requirements_from_toml
 from app.utils.output_types import OnChatModelStreamEvent, ChatModelStreamData
 
@@ -471,5 +476,80 @@ class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
                         chunk=AIMessageChunk(**kwargs)
                     )
                     yield OnChatModelStreamEvent(data=stream_data)
+        except Exception as e:
+            raise RuntimeError(f"Unexpected error. {e}") from e
+
+class LlamaIndexAgentManager(BaseAgentManager):
+    """
+    AgentManager subclass for LangGraph Agent orchestration.
+    """
+    def __init__(
+        self,
+        prompt: str,
+        industry_type: str,
+        model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
+        max_retries: Optional[int] = 6,
+        max_output_tokens: Optional[int] = None,
+        temperature: Optional[float] = 0,
+        top_p: Optional[float] = None,
+        top_k: Optional[int] = None,
+        return_steps: Optional[bool] = False,
+        verbose: Optional[bool] = True
+    ):
+        super().__init__(
+            prompt=prompt,
+            industry_type=industry_type,
+            orchestration_framework=OrchestrationFramework.LLAMAINDEX_AGENT.value,
+            model_name=model_name,
+            max_retries=max_retries,
+            max_output_tokens=max_output_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            return_steps=return_steps,
+            verbose=verbose
+        )
+        self.tools = get_llamaindex_tools(self.industry_type)
+
+    def create_agent_executor(self):
+        """
+        Creates a LlamaIndex React Agent executor.
+        """
+
+        return ReActAgent.from_tools (
+            llm = LangChainLLM(self.model_obj),
+            tools=get_llamaindex_tools(self.industry_type),
+            verbose=True
+        )
+
+    async def astream(
+        self,
+        input: Dict[str, Any],
+    ) -> AsyncGenerator[Dict, Any]:
+        """Asynchronously event streams the Agent output.
+
+        Args:
+            input: The list of messages to send to the model as input.
+
+        Yields:
+            Dictionaries representing the streamed agent output.
+
+        Exception:
+            An error is encountered during streaming.
+        """
+        try:
+            content = input["messages"][0]["content"]
+            response = await self.agent_executor.astream_chat(content)
+
+            if isinstance(response, StreamingAgentChatResponse):
+                async for message in response.async_response_gen():
+                    print("message: " + message)
+                    stream_data = ChatModelStreamData(chunk=AIMessageChunk(content=message))
+                    yield OnChatModelStreamEvent(data=stream_data)
+                print(response.response)
+            else:
+                print("Unknown response type: " + type(response).__name__)
+            
+            return  # Exit the loop if successful
         except Exception as e:
             raise RuntimeError(f"Unexpected error. {e}") from e

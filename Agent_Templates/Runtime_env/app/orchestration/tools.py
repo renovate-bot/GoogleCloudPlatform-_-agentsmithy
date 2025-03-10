@@ -21,6 +21,13 @@ from langchain_community.utilities.google_trends import GoogleTrendsAPIWrapper
 from langchain_community.utilities.google_finance import GoogleFinanceAPIWrapper
 import vertexai
 
+# LlamaIndex
+from llama_index.core.tools import FunctionTool, QueryEngineTool
+
+from llama_index.tools.yahoo_finance import YahooFinanceToolSpec
+from llama_index.indices.managed.vertexai import VertexAIIndex
+
+
 from app.orchestration.config import (
     PROJECT_ID,
     AGENT_BUILDER_LOCATION,
@@ -175,7 +182,7 @@ def get_tools(industry_type: str = None) -> list:
 
     tools_list = []
     if industry_type == IndustryType.FINANCE_INDUSTRY.value:
-        tools_list.append(YahooFinanceNewsTool())
+        tools_list.append(YahooFinanceNewsTool)
     elif industry_type == IndustryType.HEALTHCARE_INDUSTRY.value:
         tools_list.append(medical_publications_tool)
     # elif industry_type == IndustryType.RETAIL_INDUSTRY.value:
@@ -196,5 +203,89 @@ def get_tools(industry_type: str = None) -> list:
     tools_list.extend([
         # fallback,
         should_continue
+    ])
+    return tools_list
+
+def llamaindex_should_continue() -> None:
+    """
+    Use this tool if you determine that you have enough context to respond to the questions of the user.
+    """
+    return None
+
+def llamaindex_query_engine_tool() -> QueryEngineTool:
+    """
+    Try this tool first.
+    Use this when you need additional information to answer a question.
+    Useful for retrieving relevant documents based on a query.
+
+    Available documents:
+       Finance: `investments_data`: This data contains structured data about various
+        investment options, including ETFs and individual stocks. Each entry provides
+        key information like ticker symbol, market, investment rating, a textual
+        overview, and an investment analysis. This data facilitates quantitative and
+        qualitative investment research and analysis, potentially enabling automated
+        insights generation.
+       HealthCare: `PriMock57 Healthcare consultations`: This dataset consists of 57
+        mock medical primary care consultations held over 5 days by 7
+        Babylon clinicians and 57 Babylon employees acting as patients,
+        using case cards with presenting complaints, symptoms, medical
+        & general history etc.
+      Retail: `Google Store`: This data is a list of pages from the Google Store from
+        2023. It represents a listing of products, details, prices, etc related to
+        Google products.
+
+      TODO
+      Retail: `Toy Products`: This dataset provides a comprehensive listing of a toy
+        product catalog. Each row represents a unique product with attributes like
+        name, manufacturer, price, description, and product information.
+
+    Args:
+        query (str): The user's question or search query.
+
+    Returns:
+        List[Document]: A list of the top-ranked Document objects, limited to TOP_K (5) results.
+    """
+
+     # Create a corpus or provide an existing corpus ID
+    index = VertexAIIndex(
+        project_id=PROJECT_ID,
+        location=AGENT_BUILDER_LOCATION,
+        corpus_id=DATA_STORE_ID
+    )
+
+    return QueryEngineTool.from_defaults( 
+        query_engine=index.as_query_engine(),
+        name="agentsmithy",
+        description="agentsmithy_rag"
+    )
+
+def get_llamaindex_tools(industry_type: str = None) -> list:
+    """Grabs a list of tools based on the user's configselection"""
+
+    tools_list = []
+    if industry_type == IndustryType.FINANCE_INDUSTRY.value:
+        tool_spec = YahooFinanceToolSpec()
+        tools_list.extend(tool_spec.to_tool_list())
+    elif industry_type == IndustryType.HEALTHCARE_INDUSTRY.value:
+        tools_list.append(FunctionTool.from_defaults(fn=medical_publications_tool))
+    # elif industry_type == IndustryType.RETAIL_INDUSTRY.value:
+    #     tools_list.append(retail_discovery_tool)
+
+    # These tools are only used if the user specifies a SERPER_API_KEY
+    if SERP_API_KEY != "unset":
+        tools_list.extend([
+            FunctionTool.from_defaults(fn=google_search_tool),
+            FunctionTool.from_defaults(fn=google_scholar_tool),
+            FunctionTool.from_defaults(fn=google_trends_tool),
+            FunctionTool.from_defaults(fn=google_finance_tool)
+        ])
+
+    # TODO: There is a bug in here that is not obvious
+    # if DATA_STORE_ID != "unset":
+        # tools_list.append(llamaindex_query_engine_tool())
+
+    tools_list.extend([
+        # fallback,
+        FunctionTool.from_defaults(fn=llamaindex_should_continue)
     ])
     return tools_list

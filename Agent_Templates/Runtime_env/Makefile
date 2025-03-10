@@ -21,6 +21,7 @@ test:
 	poetry run pytest tests/unit && poetry run pytest tests/integration
 
 backend:
+	poetry install
 	poetry run uvicorn app.server:app --host 0.0.0.0 --port 8000 --reload
 
 load_test:
@@ -32,3 +33,6 @@ lint:
 	poetry run pylint .
 	poetry run mypy .
 	poetry run black .
+
+sanity:
+	sh tests/sanity.sh

@@ -11,6 +11,7 @@ from app.orchestration.agent import (
     LangGraphPrebuiltAgentManager,
     LangChainVertexAIReasoningEngineAgentManager,
     LangGraphVertexAIReasoningEngineAgentManager,
+    LlamaIndexAgentManager
 )
 from app.orchestration.constants import (
     FINANCE_AGENT_DESCRIPTION,
@@ -110,9 +111,15 @@ def get_agent_from_config(
             prompt=init_prompt,
             industry_type=industry_type
         )
+    elif agent_orchestration_framework == OrchestrationFramework.LLAMAINDEX_AGENT.value:
+        agent_manager = LlamaIndexAgentManager(
+            prompt=init_prompt,
+            industry_type=industry_type
+        )
     else:
         # default agent orchestration is LangGraphPrebuiltAgentManager
-        agent_manager = LangGraphPrebuiltAgentManager(
+        # agent_manager = LangGraphPrebuiltAgentManager(
+        agent_manager = LlamaIndexAgentManager(
             prompt=init_prompt,
             industry_type=industry_type
         )
