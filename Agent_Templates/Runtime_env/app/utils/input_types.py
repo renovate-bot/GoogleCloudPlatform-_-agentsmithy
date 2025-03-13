@@ -18,7 +18,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from pydantic import BaseModel, Field
 
 
-class InputChat(BaseModel):
+class InnerInputChat(BaseModel):
     """Represents the input for a chat session."""
 
     messages: List[
@@ -31,10 +31,13 @@ class InputChat(BaseModel):
     user_id: str = ""
     session_id: str = ""
 
+class InputChat(BaseModel):
+    """Wrapper class for the inner input."""
+    input: InnerInputChat
 
-class Input(BaseModel):
-    """Wrapper class for InputChat."""
 
+class RootInput(BaseModel):
+    """Root object containing the chat input."""
     input: InputChat
 
 

@@ -28,11 +28,12 @@ from traceloop.sdk import Instruments, Traceloop
 
 from app.orchestration.config import (
     AGENT_INDUSTRY_TYPE,
-    AGENT_ORCHESTRATION_FRAMEWORK
+    AGENT_ORCHESTRATION_FRAMEWORK,
+    USER_AGENT
 )
 from app.orchestration.server_utils import get_agent_from_config
-from app.utils.input_types import Feedback, Input, InputChat, default_serialization
-from app.utils.output_types import EndEvent, Event
+from app.utils.input_types import Feedback, RootInput, InnerInputChat, default_serialization
+# from app.utils.output_types import EndEvent, Event
 from app.utils.tracing import CloudTraceLoggingSpanExporter
 
 # The events that are supported by the UI Frontend
@@ -64,7 +65,7 @@ def configure_cors(app):
 # Initialize Traceloop
 try:
     Traceloop.init(
-        app_name="Sample Chatbot Application",
+        app_name=USER_AGENT,
         disable_batch=False,
         exporter=CloudTraceLoggingSpanExporter(),
         instruments={Instruments.VERTEXAI, Instruments.LANGCHAIN},
@@ -78,10 +79,11 @@ agent_manager = get_agent_from_config(
     industry_type=AGENT_INDUSTRY_TYPE,
 )
 
-def stream_event_response(input_chat: InputChat):
+async def stream_event_response(input_chat: InnerInputChat):
     """Stream events in response to an input chat."""
     run_id = uuid.uuid4()
     input_dict = input_chat.model_dump()
+    input_dict["run_id"] = str(run_id)
 
     Traceloop.set_association_properties(
         {
@@ -93,19 +95,22 @@ def stream_event_response(input_chat: InputChat):
         }
     )
 
-    yield json.dumps(
-        Event(event="metadata", data={"run_id": str(run_id)}),
-        default=default_serialization,
-    ) + "\n"
+    # yield json.dumps(
+    #     Event(event="metadata", data={"run_id": str(run_id)}),
+    #     default=default_serialization,
+    # ) + "\n"
 
-    for data in agent_manager.stream_query(input_dict):
-        yield json.dumps(
-            Event(event="on_chat_model_stream", data={"chunk": data}),
-            # data,
-            default=default_serialization
-        ) + "\n"
+    # for data in agent_manager.astream(input_dict):
+    #     yield json.dumps(
+    #         # Event(event="on_chat_model_stream", data={"chunk": data}),
+    #         # data,
+    #         default=default_serialization
+    #     ) + "\n"
 
-    yield json.dumps(EndEvent(), default=default_serialization) + "\n"
+    async for data in agent_manager.astream(input_dict):
+        yield json.dumps(data, default=default_serialization) + "\n"
+
+    # yield json.dumps(EndEvent(), default=default_serialization) + "\n"
 
 
 # Routes
@@ -122,10 +127,10 @@ async def collect_feedback(feedback_dict: Feedback) -> None:
 
 
 @app.post("/streamQuery")
-async def stream_chat_events(request: Input) -> StreamingResponse:
+async def stream_chat_events(request: RootInput) -> StreamingResponse:
     """Stream chat events in response to an input request."""
     return StreamingResponse(
-        stream_event_response(input_chat=request.input), media_type="text/event-stream"
+        stream_event_response(input_chat=request.input.input), media_type="text/event-stream"
     )
 
 configure_cors(app)

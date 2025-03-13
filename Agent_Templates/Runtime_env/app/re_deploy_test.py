@@ -2,9 +2,10 @@
 
 import vertexai
 
-from app.orchestration.agent import deploy_agent_to_reasoning_engine
+from app.orchestration.agent import deploy_agent_to_agent_engine
 from app.orchestration.config import (
     AGENT_INDUSTRY_TYPE,
+    AGENT_ORCHESTRATION_FRAMEWORK,
     PROJECT_ID,
     VERTEX_AI_LOCATION,
     GCS_STAGING_BUCKET
@@ -19,9 +20,16 @@ vertexai.init(
 
 # Get agent based on user selection
 agent_manager = get_agent_from_config(
-    # agent_orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK,
-    agent_orchestration_framework='langchain_prebuilt_agent',
+    agent_orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK,
     industry_type=AGENT_INDUSTRY_TYPE,
 )
 
-deploy_agent_to_reasoning_engine(agent_manager)
+deploy_agent_to_agent_engine(agent_manager)
+
+# from vertexai import agent_engines
+# from vertexai.preview import reasoning_engines
+
+# for engine in reasoning_engines.ReasoningEngine.list():
+#     engine.delete()
+
+# print(reasoning_engines.ReasoningEngine.list())

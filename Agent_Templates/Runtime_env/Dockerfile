@@ -23,6 +23,8 @@ COPY ./pyproject.toml ./README.md ./poetry.lock* ./
 
 COPY ./app ./app
 
+COPY ./deployment/config ./deployment/config 
+
 RUN poetry install  --no-interaction --no-ansi --without dev
 
 EXPOSE 8080

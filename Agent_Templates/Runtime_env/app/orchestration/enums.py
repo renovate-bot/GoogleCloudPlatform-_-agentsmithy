@@ -10,8 +10,10 @@ class OrchestrationFramework(Enum):
     """Enum representing the available agent orchestration framework options."""
 
     LANGCHAIN_PREBUILT_AGENT = 'langchain_prebuilt_agent'
+    LANGCHAIN_VERTEX_AI_REASONING_ENGINE_AGENT = 'langchain_vertex_ai_reasoning_engine_agent'
     LANGGRAPH_PREBUILT_AGENT = 'langgraph_prebuilt_agent'
     # LANGGRAPH_CUSTOM_AGENT = 'langgraph_custom_agent'
+    LANGGRAPH_VERTEX_AI_REASONING_ENGINE_AGENT = 'langgraph_vertex_ai_reasoning_engine_agent'
     LLAMA_AGENT = 'llama_agent'
     # CREW_AI_AGENT = 'crew_ai_agent' # Coming Soon
     # VERTEX_AI_AGENT_FRAMEWORK_AGENT = 'vertex_ai_agent_framework_agent' # Coming Soon

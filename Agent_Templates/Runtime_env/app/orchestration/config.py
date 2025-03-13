@@ -3,19 +3,19 @@
 # or representation for any use or purpose. Your use of it is subject to your
 # agreement with Google.
 # ==============================================================================
-"""Module that sets up environment variables from a sourced .env file."""
+"""Module that sets up environment variables from a sourced config yaml file."""
 import os
 
 import google
 
-from app.orchestration.constants import DEV_ENV_YAML_CONFIG_PATH
+from app.orchestration.constants import DEV_YAML_CONFIG_PATH
 from app.utils.utils import load_env_from_yaml
 
 # Initialize Google Cloud and Vertex AI
 credentials, project_id = google.auth.default()
 
-# Explicitly set env vars from file (used for reasoning engine)
-load_env_from_yaml(DEV_ENV_YAML_CONFIG_PATH)
+# Explicitly set env vars from file (used for agent engine)
+load_env_from_yaml(DEV_YAML_CONFIG_PATH)
 
 SERP_API_KEY = os.getenv("SERPER_API_KEY", "unset")
 PROJECT_ID = os.getenv("PROJECT_ID", project_id)

@@ -48,7 +48,6 @@ compressor = get_compressor(project_id=PROJECT_ID)
 
 def retrieve_info(query: str) -> tuple[str, List[Document]]:
     """
-    Try this tool first.
     Use this when you need additional information to answer a question.
     Useful for retrieving relevant documents based on a query.
 
@@ -86,13 +85,6 @@ def retrieve_info(query: str) -> tuple[str, List[Document]]:
     # Format ranked documents into a consistent structure for LLM consumption
     formatted_docs = format_docs.format(docs=ranked_docs)
     return (formatted_docs, ranked_docs)
-
-# # TODO:
-# from vertexai.generative_models import grounding, Tool
-
-# grounded_search_tool = Tool.from_google_search_retrieval(
-#     grounding.GoogleSearchRetrieval()
-# )
 
 
 def google_search_tool(query: str) -> str:
@@ -168,9 +160,9 @@ def get_tools(
     """Grabs a list of tools based on the user's configselection"""
 
     tools_list = []
-    if industry_type == IndustryType.FINANCE_INDUSTRY.value:
-        tools_list.append(yahoo_finance_tool)
-    elif industry_type == IndustryType.HEALTHCARE_INDUSTRY.value:
+    # if industry_type == IndustryType.FINANCE_INDUSTRY.value:
+    #     tools_list.append(yahoo_finance_tool)
+    if industry_type == IndustryType.HEALTHCARE_INDUSTRY.value:
         tools_list.append(medical_publications_tool)
     # elif industry_type == IndustryType.RETAIL_INDUSTRY.value:
     #     tools_list.append(retail_discovery_tool)
@@ -195,6 +187,6 @@ def get_tools(
     # If using langchain or langgraph, then the tools must be defined as structured tools
     if (orchestration_framework == OrchestrationFramework.LANGCHAIN_PREBUILT_AGENT.value or
         orchestration_framework == OrchestrationFramework.LANGGRAPH_PREBUILT_AGENT.value):
-        return [StructuredTool.from_function(tool) for tool in tools_list]
+        tools_list = [StructuredTool.from_function(tool) for tool in tools_list]
 
     return tools_list

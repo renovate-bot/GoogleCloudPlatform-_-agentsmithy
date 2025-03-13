@@ -7,7 +7,7 @@
 """Module used to define and interact with agent orchestrators."""
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, Iterable
+from typing import AsyncGenerator, Dict, Any, Optional
 
 from google.api_core import exceptions
 from langchain.agents import (
@@ -18,6 +18,7 @@ from langchain_core.messages import AIMessageChunk, ToolMessage, AIMessage
 from langchain_google_vertexai import ChatVertexAI
 from langgraph.prebuilt import create_react_agent as langgraph_create_react_agent
 from vertexai.preview import reasoning_engines # TODO: update this when it becomes agent engine
+from vertexai import agent_engines
 
 from app.orchestration.constants import (
     GEMINI_FLASH_20_LATEST,
@@ -28,7 +29,10 @@ from app.orchestration.config import (
 )
 from app.orchestration.enums import OrchestrationFramework
 from app.orchestration.tools import get_tools
-from app.utils.utils import get_requirements_from_toml
+from app.utils.utils import (
+    get_requirements_from_toml,
+)
+# from app.utils.output_types import OnChatModelStreamEvent, ChatModelStreamData
 
 
 class BaseAgentManager(ABC):
@@ -83,11 +87,11 @@ class BaseAgentManager(ABC):
 
         self.tools = self.get_tools()
         self.model_obj = self.get_model_obj()
-        self.agent_executor = self.set_up()
+        self.agent_executor = self.create_agent_executor()
 
 
     @abstractmethod
-    def set_up(self):
+    def create_agent_executor(self):
         """
         Abstract method to create the specific agent executor based on the
         orchestration framework.  This must be implemented by subclasses.
@@ -139,10 +143,10 @@ class BaseAgentManager(ABC):
 
 
     @abstractmethod
-    def stream_query(
+    async def astream(
         self,
         input: Dict[str, Any],
-    ) -> Iterable:
+    ) -> AsyncGenerator[Dict, Any]:
         """
         Abstract method to asynchronously stream the Agent output.
         This should be implemented by subclasses to handle the specific
@@ -183,7 +187,7 @@ class LangChainPrebuiltAgentManager(BaseAgentManager):
         )
 
 
-    def set_up(self):
+    def create_agent_executor(self):
         """
         Creates a Langchain React Agent executor.
         """
@@ -200,31 +204,51 @@ class LangChainPrebuiltAgentManager(BaseAgentManager):
         )
 
 
-    def stream_query(
+    async def astream(
         self,
         input: Dict[str, Any],
-    ) -> Iterable:
-        """Event streams the Agent output.
+    ) -> AsyncGenerator[Dict, Any]:
+        """Asynchronously event streams the Agent output.
 
         Args:
             input: The list of messages to send to the model as input.
 
         Yields:
-            Iterable representing the streamed agent output.
+            Dictionaries representing the streamed agent output.
 
         Exception:
             An error is encountered during streaming.
         """
         try:
-            for chunk in self.agent_executor.stream(
+            async for chunk in self.agent_executor.astream(
                 {
                     "input": input["messages"][0],
                     "chat_history": input["messages"][1:],
                 }
             ):
+                # Organize response object to be consistent with other Agents (e.g. Agent Engine)
                 if "output" in chunk:
-                    chunk["content"] = chunk["output"]
-                    yield chunk
+                    response_obj = {
+                        "agent": {
+                            "output": chunk["output"],
+                            "messages": [
+                                {
+                                    "lc": 1,
+                                    "type": "constructor",
+                                    "id": ["langchain", "schema", "messages", "AIMessage"],
+                                    "kwargs": {
+                                        "content": chunk["output"],
+                                        "type": "ai",
+                                        "tool_calls": [],
+                                        "invalid_tool_calls": [],
+                                        "id": input["run_id"]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                    yield response_obj
+            return  # Exit the loop if successful
         except Exception as e:
             raise RuntimeError(f"Unexpected error. {e}") from e
 
@@ -261,9 +285,9 @@ class LangGraphPrebuiltAgentManager(BaseAgentManager):
         )
 
 
-    def set_up(self):
+    def create_agent_executor(self):
         """
-        Creates a LangGraph Agent executor.
+        Creates a LangGraph React Agent executor.
         """
         return langgraph_create_react_agent(
             prompt=self.prompt,
@@ -273,63 +297,226 @@ class LangGraphPrebuiltAgentManager(BaseAgentManager):
         )
 
 
-    def stream_query(
+    async def astream(
         self,
         input: Dict[str, Any],
-    ) -> Iterable:
+    ) -> AsyncGenerator[Dict, Any]:
         """Asynchronously event streams the Agent output.
 
         Args:
             input: The list of messages to send to the model as input.
 
         Yields:
-            Iterable representing the streamed agent output.
+            Dictionaries representing the streamed agent output.
 
         Exception:
             An error is encountered during streaming.
         """
         try:
-            for chunk in self.agent_executor.stream(input, stream_mode="messages"):
-                message = chunk[0]
-                if isinstance(message, (AIMessageChunk, AIMessage)):
-                    yield message
-                elif isinstance(message, ToolMessage):
-                    # TODO: Implement something like this:
-                    # stream_data = ToolMessageStreamData(tool_call_id=message.tool_call_id, result=message.content)
-                    # yield OnToolMessageStreamEvent(data=stream_data)
-                    print(f"ToolMessage received: {message.content}")
-                    continue
+            async for chunk in self.agent_executor.astream(input, stream_mode="values"):
+                message = chunk["messages"][-1]
+                if isinstance(message, AIMessage):
+                    # Organize response object to be consistent with other Agents (e.g. Agent Engine)
+                    response_obj = {
+                        "agent": {
+                            "messages": [
+                                {
+                                    "lc": 1,
+                                    "type": "constructor",
+                                    "id": ["langgraph", "schema", "messages", "AIMessage"],
+                                    "kwargs": {
+                                        "content": message.content,
+                                        "type": "ai",
+                                        "tool_calls": [],
+                                        "invalid_tool_calls": [],
+                                        "id": input["run_id"]
+                                    },
+                                    "usage_metadata": message.usage_metadata
+                                }
+                            ]
+                        }
+                    }
+                    yield response_obj
             return  # Exit the loop if successful
         except Exception as e:
             raise RuntimeError(f"Unexpected error. {e}") from e
 
 
-def deploy_agent_to_reasoning_engine(
-    agent_manager: BaseAgentManager
-) -> reasoning_engines.ReasoningEngine:
+class LangChainVertexAIReasoningEngineAgentManager(BaseAgentManager):
     """
-    Deploys the Vertex AI reasoning engine to a remote managed endpoint.
+    AgentManager subclass for Vertex AI Reasoning Engine LangChain orchestration.
+    """
+    def __init__(
+        self,
+        prompt: str,
+        industry_type: str,
+        model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
+        max_retries: Optional[int] = 6,
+        max_output_tokens: Optional[int] = None,
+        temperature: Optional[float] = 0,
+        top_p: Optional[float] = None,
+        top_k: Optional[int] = None,
+        return_steps: Optional[bool] = False,
+        verbose: Optional[bool] = True
+    ):
+         super().__init__(
+            prompt=prompt,
+            industry_type=industry_type,
+            orchestration_framework=OrchestrationFramework.LANGCHAIN_VERTEX_AI_REASONING_ENGINE_AGENT.value,
+            model_name=model_name,
+            max_retries=max_retries,
+            max_output_tokens=max_output_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            return_steps=return_steps,
+            verbose=verbose
+        )
+
+
+    def create_agent_executor(self):
+        """
+        Creates a Vertex AI Reasoning Engine Langchain Agent executor.
+        """
+        langchain_agent = reasoning_engines.LangchainAgent(
+            prompt=self.prompt,
+            model=self.model_name,
+            tools=self.tools,
+            agent_executor_kwargs={
+                'return_intermediate_steps': self.return_steps,
+                'verbose': self.verbose
+            },
+            enable_tracing=True
+        )
+        langchain_agent.set_up()
+        return langchain_agent
+
+
+    async def astream(
+        self,
+        input: Dict[str, Any],
+    ) -> AsyncGenerator[Dict, Any]:
+        """
+        Asynchronously streams the Agent output using Vertex AI reasoning engine.
+
+        Args:
+            input: The list of messages to send to the model as input.
+
+        Yields:
+            Dictionaries representing the streamed agent output.
+
+        Exception:
+            An error is encountered during streaming.
+        """
+        try:
+            for chunk in self.agent_executor.stream_query(
+                input=input
+            ):
+                # Set the run_ids using the one from the server
+                chunk["messages"] = [{**msg, "kwargs": {**msg["kwargs"], "id": input["run_id"]}} for msg in chunk["messages"]]
+                yield {"agent": chunk}
+        except Exception as e:
+            raise RuntimeError(f"Unexpected error. {e}") from e
+
+
+class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
+    """
+    AgentManager subclass for Vertex AI Reasoning Engine LangGraph orchestration.
+    """
+    def __init__(
+        self,
+        prompt: str,
+        industry_type: str,
+        model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
+        max_retries: Optional[int] = 6,
+        max_output_tokens: Optional[int] = None,
+        temperature: Optional[float] = 0,
+        top_p: Optional[float] = None,
+        top_k: Optional[int] = None,
+        return_steps: Optional[bool] = False,
+        verbose: Optional[bool] = True
+    ):
+         super().__init__(
+            prompt=prompt,
+            industry_type=industry_type,
+            orchestration_framework=OrchestrationFramework.LANGGRAPH_VERTEX_AI_REASONING_ENGINE_AGENT.value,
+            model_name=model_name,
+            max_retries=max_retries,
+            max_output_tokens=max_output_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            return_steps=return_steps,
+            verbose=verbose
+        )
+
+
+    def create_agent_executor(self):
+        """
+        Creates a Vertex AI Reasoning Engine LangGraph Agent executor.
+        """
+        langgraph_agent = reasoning_engines.LanggraphAgent(
+            model=self.model_name,
+            tools=self.tools,
+            runnable_kwargs={"prompt": self.prompt, "debug": self.verbose},
+            enable_tracing=True
+        )
+        langgraph_agent.set_up()
+        return langgraph_agent
+
+
+    async def astream(
+        self,
+        input: Dict[str, Any],
+    ) -> AsyncGenerator[Dict, Any]:
+        """
+        Asynchronously streams the Agent output using Vertex AI reasoning engine.
+
+        Args:
+            input: The list of messages to send to the model as input.
+
+        Yields:
+            Dictionaries representing the streamed agent output.
+
+        Exception:
+            An error is encountered during streaming.
+        """
+        try:
+            for chunk in self.agent_executor.stream_query(
+                input=input,
+                stream_mode="values"
+            ):
+                # Override the each of the run_ids with the one from the server
+                chunk["messages"] = [{**msg, "kwargs": {**msg["kwargs"], "id": input["run_id"]}} for msg in chunk["messages"]]
+                yield {"agent": chunk}
+        except Exception as e:
+            raise RuntimeError(f"Unexpected error. {e}") from e
+
+
+def deploy_agent_to_agent_engine(
+    agent_manager: BaseAgentManager
+):
+    """
+    Deploys the Vertex AI agent engine to a remote managed endpoint.
 
     Args:
-        agent_manager: The agent_manager to be deployed to reasoning engine.
+        agent_manager: The agent_manager to be deployed to agent engine.
 
     Returns:
-        Remote Reasoning Engine agent.
+        Remote Agent Engine agent.
 
     Exception:
         An error is encountered during deployment.
     """
     try:
-        remote_agent = reasoning_engines.ReasoningEngine.create(
-            agent_manager,
+        remote_agent = agent_engines.create(
+            agent_manager.agent_executor,
             requirements=get_requirements_from_toml(),
             display_name=USER_AGENT,
             description=AGENT_DESCRIPTION,
-            extra_packages=["./app", "./deployment/env"],
+            extra_packages=["./app", "./deployment/config"],
         )
     except Exception as e:
-        raise RuntimeError(f"Error deploying Reasoning Engine Agent. {e}") from e
+        raise RuntimeError(f"Error deploying Agent Engine Agent. {e}") from e
 
     return remote_agent
-
-# class LangGraphCustomAgentManager(BaseAgentManager):

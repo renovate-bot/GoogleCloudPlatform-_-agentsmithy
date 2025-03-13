@@ -42,4 +42,4 @@ help you answer questions. Check your available tools before answer questions.
 If the user asks a general question that is not retail related, try to answer it with what
 you think is the answer."""
 
-DEV_ENV_YAML_CONFIG_PATH = "deployment/env/dev.yaml"
+DEV_YAML_CONFIG_PATH = "deployment/config/dev.yaml"

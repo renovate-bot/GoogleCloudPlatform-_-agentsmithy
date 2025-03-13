@@ -8,7 +8,9 @@ from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 
 from app.orchestration.agent import (
     LangChainPrebuiltAgentManager,
-    LangGraphPrebuiltAgentManager
+    LangGraphPrebuiltAgentManager,
+    LangChainVertexAIReasoningEngineAgentManager,
+    LangGraphVertexAIReasoningEngineAgentManager,
 )
 from app.orchestration.constants import (
     FINANCE_AGENT_DESCRIPTION,
@@ -93,8 +95,18 @@ def get_agent_from_config(
             prompt=init_prompt,
             industry_type=industry_type
         )
+    elif agent_orchestration_framework == OrchestrationFramework.LANGCHAIN_VERTEX_AI_REASONING_ENGINE_AGENT.value:
+        agent_manager = LangChainVertexAIReasoningEngineAgentManager(
+            prompt=init_prompt,
+            industry_type=industry_type
+        )
     elif agent_orchestration_framework == OrchestrationFramework.LANGGRAPH_PREBUILT_AGENT.value:
         agent_manager = LangGraphPrebuiltAgentManager(
+            prompt=init_prompt,
+            industry_type=industry_type
+        )
+    elif agent_orchestration_framework == OrchestrationFramework.LANGGRAPH_VERTEX_AI_REASONING_ENGINE_AGENT.value:
+        agent_manager = LangGraphVertexAIReasoningEngineAgentManager(
             prompt=init_prompt,
             industry_type=industry_type
         )
