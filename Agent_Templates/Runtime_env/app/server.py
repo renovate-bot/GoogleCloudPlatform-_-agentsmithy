@@ -29,6 +29,7 @@ from traceloop.sdk import Instruments, Traceloop
 from app.orchestration.config import (
     AGENT_INDUSTRY_TYPE,
     AGENT_ORCHESTRATION_FRAMEWORK,
+    AGENT_FOUNDATION_MODEL,
     USER_AGENT
 )
 from app.orchestration.server_utils import get_agent_from_config
@@ -77,6 +78,7 @@ except Exception as e:
 agent_manager = get_agent_from_config(
     agent_orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK,
     industry_type=AGENT_INDUSTRY_TYPE,
+    agent_foundation_model=AGENT_FOUNDATION_MODEL
 )
 
 async def stream_event_response(input_chat: InnerInputChat):

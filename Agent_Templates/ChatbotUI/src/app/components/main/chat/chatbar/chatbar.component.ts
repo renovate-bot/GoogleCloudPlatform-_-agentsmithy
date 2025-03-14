@@ -351,7 +351,6 @@ export class ChatbarComponent implements OnDestroy {
     // this.clearTimeoutForLoaderText();
     // this.isSuggestedQuestion = '';
 
-    console.log("Answer:", answer)
     let events: string[] = answer.split("\n");
 
     // Filter out empty strings that might result from extra newlines.

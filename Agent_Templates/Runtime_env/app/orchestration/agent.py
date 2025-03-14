@@ -7,7 +7,8 @@
 """Module used to define and interact with agent orchestrators."""
 
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator, Dict, Any, Optional
+from typing import AsyncGenerator, Generator, Dict, Any, Optional
+import uuid
 
 from google.api_core import exceptions
 from langchain.agents import (
@@ -16,22 +17,27 @@ from langchain.agents import (
 )
 from langchain_core.messages import AIMessageChunk, ToolMessage, AIMessage
 from langchain_google_vertexai import ChatVertexAI
+from langchain_google_vertexai.model_garden import ChatAnthropicVertex
 from langgraph.prebuilt import create_react_agent as langgraph_create_react_agent
 from vertexai.preview import reasoning_engines # TODO: update this when it becomes agent engine
 from vertexai import agent_engines
 
-from app.orchestration.constants import (
-    GEMINI_FLASH_20_LATEST,
-)
+# LlamaIndex
+from llama_index.core import Settings
+from llama_index.core.agent import ReActAgent
+from llama_index.llms.langchain import LangChainLLM
+
+from app.orchestration.constants import GEMINI_FLASH_20_LATEST
 from app.orchestration.config import (
     USER_AGENT,
     AGENT_DESCRIPTION
 )
 from app.orchestration.enums import OrchestrationFramework
-from app.orchestration.tools import get_tools
-from app.utils.utils import (
-    get_requirements_from_toml,
+from app.orchestration.tools import (
+    get_tools,
+    get_llamaindex_tools
 )
+from app.utils.utils import get_requirements_from_toml
 # from app.utils.output_types import OnChatModelStreamEvent, ChatModelStreamData
 
 
@@ -46,6 +52,7 @@ class BaseAgentManager(ABC):
         self,
         prompt: str,
         industry_type: str,
+        location: str,
         orchestration_framework: str,
         model_name: str,
         max_retries: int,
@@ -62,6 +69,7 @@ class BaseAgentManager(ABC):
         Args:
             prompt: System instructions to give to the agent.
             industry_type: The agent industry type to use. Correlates to tool configs.
+            location: The GCP location to run the chat model.
             orchestration_framework: The type of agent framework to use.
             model_name: The valid name of the LLM to use for the agent.
             max_retries: Maximum number of times to retry the query on a failure.
@@ -75,6 +83,7 @@ class BaseAgentManager(ABC):
         """
         self.prompt = prompt
         self.industry_type = industry_type
+        self.location = location
         self.orchestration_framework = orchestration_framework
         self.model_name = model_name
         self.max_retries = max_retries
@@ -85,8 +94,8 @@ class BaseAgentManager(ABC):
         self.return_steps = return_steps
         self.verbose = verbose
 
-        self.tools = self.get_tools()
         self.model_obj = self.get_model_obj()
+        self.tools = self.get_tools()
         self.agent_executor = self.create_agent_executor()
 
 
@@ -127,15 +136,31 @@ class BaseAgentManager(ABC):
             The model_name is not found.
         """
         try:
-            return ChatVertexAI(
-                model_name=self.model_name,
-                max_retries=self.max_retries,
-                max_output_tokens=self.max_output_tokens,
-                temperature=self.temperature,
-                top_p=self.top_p,
-                top_k=self.top_k,
-                verbose=self.verbose
-            )
+            if "claude" in self.model_name:
+                return ChatAnthropicVertex(
+                    model_name=self.model_name,
+                    max_retries=self.max_retries,
+                    ## causes issues with the pydantic model with default None value:
+                    # max_output_tokens=self.max_output_tokens,
+                    ## for now, claude is only available in us-east5 and europe-west1
+                    # location = self.location,
+                    location = "us-east5",
+                    temperature=self.temperature,
+                    top_p=self.top_p,
+                    top_k=self.top_k,
+                    verbose=self.verbose
+                )
+            else:
+                return ChatVertexAI(
+                    model_name=self.model_name,
+                    location=self.location,
+                    max_retries=self.max_retries,
+                    max_output_tokens=self.max_output_tokens,
+                    temperature=self.temperature,
+                    top_p=self.top_p,
+                    top_k=self.top_k,
+                    verbose=self.verbose
+                )
         except exceptions.NotFound as e:
             raise exceptions.NotFound(f"Resource not found. {e}")
         except Exception as e:
@@ -163,6 +188,7 @@ class LangChainPrebuiltAgentManager(BaseAgentManager):
         self,
         prompt: str,
         industry_type: str,
+        location: Optional[str] = "us-central1",
         model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
         max_retries: Optional[int] = 6,
         max_output_tokens: Optional[int] = None,
@@ -175,6 +201,7 @@ class LangChainPrebuiltAgentManager(BaseAgentManager):
         super().__init__(
             prompt=prompt,
             industry_type=industry_type,
+            location=location,
             orchestration_framework=OrchestrationFramework.LANGCHAIN_PREBUILT_AGENT.value,
             model_name=model_name,
             max_retries=max_retries,
@@ -261,6 +288,7 @@ class LangGraphPrebuiltAgentManager(BaseAgentManager):
         self,
         prompt: str,
         industry_type: str,
+        location: Optional[str] = "us-central1",
         model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
         max_retries: Optional[int] = 6,
         max_output_tokens: Optional[int] = None,
@@ -273,6 +301,7 @@ class LangGraphPrebuiltAgentManager(BaseAgentManager):
         super().__init__(
             prompt=prompt,
             industry_type=industry_type,
+            location=location,
             orchestration_framework=OrchestrationFramework.LANGGRAPH_PREBUILT_AGENT.value,
             model_name=model_name,
             max_retries=max_retries,
@@ -350,6 +379,7 @@ class LangChainVertexAIReasoningEngineAgentManager(BaseAgentManager):
         self,
         prompt: str,
         industry_type: str,
+        location: Optional[str] = "us-central1",
         model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
         max_retries: Optional[int] = 6,
         max_output_tokens: Optional[int] = None,
@@ -362,6 +392,7 @@ class LangChainVertexAIReasoningEngineAgentManager(BaseAgentManager):
          super().__init__(
             prompt=prompt,
             industry_type=industry_type,
+            location=location,
             orchestration_framework=OrchestrationFramework.LANGCHAIN_VERTEX_AI_REASONING_ENGINE_AGENT.value,
             model_name=model_name,
             max_retries=max_retries,
@@ -427,6 +458,7 @@ class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
         self,
         prompt: str,
         industry_type: str,
+        location: Optional[str] = "us-central1",
         model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
         max_retries: Optional[int] = 6,
         max_output_tokens: Optional[int] = None,
@@ -439,6 +471,7 @@ class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
          super().__init__(
             prompt=prompt,
             industry_type=industry_type,
+            location=location,
             orchestration_framework=OrchestrationFramework.LANGGRAPH_VERTEX_AI_REASONING_ENGINE_AGENT.value,
             model_name=model_name,
             max_retries=max_retries,
@@ -493,14 +526,168 @@ class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
             raise RuntimeError(f"Unexpected error. {e}") from e
 
 
-def deploy_agent_to_agent_engine(
-    agent_manager: BaseAgentManager
-):
+class LlamaIndexAgentManager(BaseAgentManager):
+    """
+    AgentManager subclass for LangGraph Agent orchestration.
+    """
+    def __init__(
+        self,
+        prompt: str,
+        industry_type: str,
+        location: Optional[str] = "us-central1",
+        model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
+        max_retries: Optional[int] = 6,
+        max_output_tokens: Optional[int] = None,
+        temperature: Optional[float] = 0,
+        top_p: Optional[float] = None,
+        top_k: Optional[int] = None,
+        return_steps: Optional[bool] = False,
+        verbose: Optional[bool] = True
+    ):
+        super().__init__(
+            prompt=prompt,
+            industry_type=industry_type,
+            location=location,
+            orchestration_framework=OrchestrationFramework.LLAMAINDEX_AGENT.value,
+            model_name=model_name,
+            max_retries=max_retries,
+            max_output_tokens=max_output_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            return_steps=return_steps,
+            verbose=verbose
+        )
+        self.model_obj = LangChainLLM(self.model_obj)
+
+
+    def get_tools(self):
+        """
+        Helper method to retrieve tools based on the industry type.
+
+        Returns:
+            A list of tools for the agent to use, based on the industry type.
+        """
+        return get_llamaindex_tools(self.industry_type)
+
+
+    def create_agent_executor(self):
+        """
+        Creates a LlamaIndex React Agent executor.
+        """
+        # setup the index/query llm for Vertex Search
+        Settings.llm = LangChainLLM(self.model_obj)
+        return ReActAgent.from_tools(
+            prompt=self.prompt,
+            llm = LangChainLLM(self.model_obj),
+            tools=self.tools,
+            verbose=self.verbose
+        )
+
+
+    def get_response_obj(
+        self,
+        content: str,
+        run_id: str
+    ) -> Dict:
+        """Returns a structure dictionary response object.
+        The response object needs to be organized to be
+        consistent with other Agents (e.g. Agent Engine)
+
+        Args:
+            content: The string reponse from the LLM.
+            run_id: The run_id.
+
+        Returns:
+            Structured dictionary reponse object.
+        """
+        response_obj = {
+            "agent": {
+                "messages": [
+                    {
+                        "lc": 1,
+                        "type": "constructor",
+                        "id": ["llamaindex", "schema", "messages", "AIMessage"],
+                        "kwargs": {
+                            "content": content,
+                            "type": "ai",
+                            "tool_calls": [],
+                            "invalid_tool_calls": [],
+                            "id": run_id
+                        },
+                    }
+                ]
+            }
+        }
+        return response_obj
+
+
+    async def astream(
+        self,
+        input: Dict[str, Any],
+    ) -> AsyncGenerator[Dict, Any]:
+        """Asynchronously event streams the Agent output. Needs to be
+        an Iterable for Agent Engine deployments
+
+        Args:
+            input: The list of messages to send to the model as input.
+
+        Yields:
+            Dictionaries representing the streamed agent output.
+
+        Exception:
+            An error is encountered during streaming.
+        """
+        try:
+            content = input["messages"][0]["content"] # TODO: chat_history
+            response = await self.agent_executor.aquery(content)
+            yield self.get_response_obj(
+                content=response.response,
+                run_id=input["run_id"]
+            )
+
+        except Exception as e:
+            raise RuntimeError(f"Unexpected error. {e}") from e
+
+    # # alias stream_query for Agent Engine deployments
+    # stream_query = astream
+
+    def stream_query(
+        self,
+        input: Dict[str, Any]
+    ) -> Generator:
+        """Synchronously event streams the Agent output.
+        This function is an alias for astream for Agent Engine deployments
+
+        Args:
+            input: The list of messages to send to the model as input.
+
+        Yields:
+            Dictionaries representing the streamed agent output.
+
+        Exception:
+            An error is encountered during processing.
+        """
+        run_id = uuid.uuid4()
+        try:
+            content = input["messages"][0]["content"] # TODO: chat_history
+            response = self.agent_executor.query(content)
+            yield self.get_response_obj(
+                content=response.response,
+                run_id=run_id
+            )
+
+        except Exception as e:
+            raise RuntimeError(f"Unexpected error. {e}") from e
+
+
+def deploy_agent_to_agent_engine(agent):
     """
     Deploys the Vertex AI agent engine to a remote managed endpoint.
 
     Args:
-        agent_manager: The agent_manager to be deployed to agent engine.
+        agent: The agent to be deployed to agent engine.
+            Will be an .agent_executor in the case of langchain/langgraph
 
     Returns:
         Remote Agent Engine agent.
@@ -510,7 +697,7 @@ def deploy_agent_to_agent_engine(
     """
     try:
         remote_agent = agent_engines.create(
-            agent_manager.agent_executor,
+            agent,
             requirements=get_requirements_from_toml(),
             display_name=USER_AGENT,
             description=AGENT_DESCRIPTION,

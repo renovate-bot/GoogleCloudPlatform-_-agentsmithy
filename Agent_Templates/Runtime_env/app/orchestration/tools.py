@@ -21,6 +21,12 @@ from langchain_community.utilities.google_trends import GoogleTrendsAPIWrapper
 from langchain_community.utilities.google_finance import GoogleFinanceAPIWrapper
 import vertexai
 
+# LlamaIndex
+from llama_index.core.tools import FunctionTool
+from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.retrievers.vertexai_search import VertexAISearchRetriever
+# from llama_index.tools.yahoo_finance import YahooFinanceToolSpec
+
 from app.orchestration.config import (
     PROJECT_ID,
     AGENT_BUILDER_LOCATION,
@@ -38,7 +44,10 @@ from app.rag.retriever import get_compressor, get_retriever
 # Initialize Vertex AI
 vertexai.init(project=PROJECT_ID)
 
-retriever = get_retriever(
+
+### langchain/langgraph tools: ###
+
+lang_retriever = get_retriever(
     project_id=PROJECT_ID,
     data_store_id=DATA_STORE_ID,
     agent_builder_location=AGENT_BUILDER_LOCATION,
@@ -79,7 +88,7 @@ def retrieve_info(query: str) -> tuple[str, List[Document]]:
         List[Document]: A list of the top-ranked Document objects, limited to TOP_K (5) results.
     """
     # Use the retriever to fetch relevant documents based on the query
-    retrieved_docs = retriever.invoke(query)
+    retrieved_docs = lang_retriever.invoke(query)
     # Re-rank docs with Vertex AI Rank for better relevance
     ranked_docs = compressor.compress_documents(documents=retrieved_docs, query=query)
     # Format ranked documents into a consistent structure for LLM consumption
@@ -188,5 +197,73 @@ def get_tools(
     if (orchestration_framework == OrchestrationFramework.LANGCHAIN_PREBUILT_AGENT.value or
         orchestration_framework == OrchestrationFramework.LANGGRAPH_PREBUILT_AGENT.value):
         tools_list = [StructuredTool.from_function(tool) for tool in tools_list]
+
+    return tools_list
+
+### llamaindex tools: ###
+
+llama_retriever = VertexAISearchRetriever(
+    project_id=PROJECT_ID,
+    data_store_id=DATA_STORE_ID,
+    location_id=AGENT_BUILDER_LOCATION,
+    engine_data_type=0,
+)
+
+def llamaindex_query_engine_tool(query: str) -> str:
+    """
+    Use this when you need additional information to answer a question.
+    Useful for retrieving relevant documents based on a query.
+
+    Available documents:
+       Finance: `investments_data`: This data contains structured data about various
+        investment options, including ETFs and individual stocks. Each entry provides
+        key information like ticker symbol, market, investment rating, a textual
+        overview, and an investment analysis. This data facilitates quantitative and
+        qualitative investment research and analysis, potentially enabling automated
+        insights generation.
+       HealthCare: `PriMock57 Healthcare consultations`: This dataset consists of 57
+        mock medical primary care consultations held over 5 days by 7
+        Babylon clinicians and 57 Babylon employees acting as patients,
+        using case cards with presenting complaints, symptoms, medical
+        & general history etc.
+      Retail: `Google Store`: This data is a list of pages from the Google Store from
+        2023. It represents a listing of products, details, prices, etc related to
+        Google products.
+
+    Args:
+        query (str): The user's question or search query.
+
+    Returns:
+        List[Document]: A list of the top-ranked Document objects
+    """
+    query_engine = RetrieverQueryEngine.from_args(llama_retriever)
+    response = query_engine.query(query)
+    return str(response)
+
+
+def get_llamaindex_tools(industry_type: str = None) -> list:
+    """Grabs a list of tools based on the user's configselection"""
+
+    tools_list = []
+    # if industry_type == IndustryType.FINANCE_INDUSTRY.value:
+    #     tool_spec = YahooFinanceToolSpec()
+    #     tools_list.extend(tool_spec.to_tool_list())
+    if industry_type == IndustryType.HEALTHCARE_INDUSTRY.value:
+        tools_list.append(FunctionTool.from_defaults(fn=medical_publications_tool))
+    # elif industry_type == IndustryType.RETAIL_INDUSTRY.value:
+    #     tools_list.append(retail_discovery_tool)
+
+    # These tools are only used if the user specifies a SERPER_API_KEY
+    if SERP_API_KEY != "unset":
+        tools_list.extend([
+            FunctionTool.from_defaults(fn=google_search_tool),
+            FunctionTool.from_defaults(fn=google_scholar_tool),
+            FunctionTool.from_defaults(fn=google_trends_tool),
+            FunctionTool.from_defaults(fn=google_finance_tool)
+        ])
+
+    # TODO: There is a bug in here that is not obvious
+    if DATA_STORE_ID != "unset":
+        tools_list.append(FunctionTool.from_defaults(fn=llamaindex_query_engine_tool))
 
     return tools_list
