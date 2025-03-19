@@ -8,6 +8,7 @@ requirements.txt format"""
 import os
 
 import toml
+from vertexai import agent_engines
 import yaml
 
 def get_requirements_from_toml(pyproject_file="pyproject.toml"):
@@ -119,3 +120,37 @@ def load_env_from_yaml(filepath: str):
 
     except FileNotFoundError:
         raise FileNotFoundError(f"YAML file not found: {filepath}")
+
+
+def deploy_agent_to_agent_engine(
+    agent,
+    user_agent: str,
+    description: str
+):
+    """
+    Deploys the Vertex AI agent engine to a remote managed endpoint.
+
+    Args:
+        agent: The agent to be deployed to agent engine.
+            Will be an .agent_executor in the case of langchain/langgraph
+        user_agent: The name of the agent
+        description: The description of the agent
+
+    Returns:
+        Remote Agent Engine agent.
+
+    Exception:
+        An error is encountered during deployment.
+    """
+    try:
+        remote_agent = agent_engines.create(
+            agent,
+            requirements=get_requirements_from_toml(),
+            display_name=user_agent,
+            description=description,
+            extra_packages=["./app", "./deployment/config"],
+        )
+    except Exception as e:
+        raise RuntimeError(f"Error deploying Agent Engine Agent. {e}") from e
+
+    return remote_agent

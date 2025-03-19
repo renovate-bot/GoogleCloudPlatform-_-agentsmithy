@@ -3119,6 +3119,22 @@ langchain = ">=0.1.7"
 llama-index-core = ">=0.12.0,<0.13.0"
 
 [[package]]
+name = "llama-index-llms-openai"
+version = "0.3.25"
+description = "llama-index llms openai integration"
+optional = false
+python-versions = "<4.0,>=3.9"
+groups = ["main"]
+files = [
+    {file = "llama_index_llms_openai-0.3.25-py3-none-any.whl", hash = "sha256:b21ea58f20c82f442b910b8f878bbbfd4937f601aa436cbe55b26c1d490762a6"},
+    {file = "llama_index_llms_openai-0.3.25.tar.gz", hash = "sha256:1e4fd1d166bb635ca7c03f0486c04d80978948c5b8d89c8b469ae5d02852cf4b"},
+]
+
+[package.dependencies]
+llama-index-core = ">=0.12.17,<0.13.0"
+openai = ">=1.58.1,<2.0.0"
+
+[[package]]
 name = "llama-index-retrievers-vertexai-search"
 version = "0.2.0"
 description = "llama-index retrievers vertex ai search integration"
@@ -7907,4 +7923,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<3.13"
-content-hash = "269d56337a00c65c916ae8dc0fcbb02b4cda9d09dc4d24c1b9c09c7cf684d20b"
+content-hash = "b3a822feccc9070350cb6ab32a47a27747dff444bbc85545a933c985bf3e9e73"

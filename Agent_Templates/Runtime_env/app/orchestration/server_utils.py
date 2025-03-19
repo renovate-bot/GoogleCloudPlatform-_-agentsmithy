@@ -9,8 +9,8 @@ from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from app.orchestration.agent import (
     LangChainPrebuiltAgentManager,
     LangGraphPrebuiltAgentManager,
-    LangChainVertexAIReasoningEngineAgentManager,
-    LangGraphVertexAIReasoningEngineAgentManager,
+    LangChainVertexAIAgentEngineAgentManager,
+    LangGraphVertexAIAgentEngineAgentManager,
     LlamaIndexAgentManager
 )
 from app.orchestration.constants import (
@@ -136,6 +136,7 @@ def get_agent_from_config(
         agent_orchestration_framework: str,
         agent_foundation_model: str,
         industry_type: str,
+        agent_engine_resource_id: str = None,
     ):
     """Returns the associated Agent Manager based on the defined selection"""
 
@@ -147,38 +148,44 @@ def get_agent_from_config(
         agent_manager = LangChainPrebuiltAgentManager(
             prompt=init_prompt,
             industry_type=industry_type,
-            model_name=agent_foundation_model
+            model_name=agent_foundation_model,
+            agent_engine_resource_id=agent_engine_resource_id
         )
-    elif agent_orchestration_framework == OrchestrationFramework.LANGCHAIN_VERTEX_AI_REASONING_ENGINE_AGENT.value:
-        agent_manager = LangChainVertexAIReasoningEngineAgentManager(
+    elif agent_orchestration_framework == OrchestrationFramework.LANGCHAIN_VERTEX_AI_AGENT_ENGINE_AGENT.value:
+        agent_manager = LangChainVertexAIAgentEngineAgentManager(
             prompt=init_prompt,
             industry_type=industry_type,
-            model_name=agent_foundation_model
+            model_name=agent_foundation_model,
+            agent_engine_resource_id=agent_engine_resource_id
         )
     elif agent_orchestration_framework == OrchestrationFramework.LANGGRAPH_PREBUILT_AGENT.value:
         agent_manager = LangGraphPrebuiltAgentManager(
             prompt=init_prompt,
             industry_type=industry_type,
-            model_name=agent_foundation_model
+            model_name=agent_foundation_model,
+            agent_engine_resource_id=agent_engine_resource_id
         )
-    elif agent_orchestration_framework == OrchestrationFramework.LANGGRAPH_VERTEX_AI_REASONING_ENGINE_AGENT.value:
-        agent_manager = LangGraphVertexAIReasoningEngineAgentManager(
+    elif agent_orchestration_framework == OrchestrationFramework.LANGGRAPH_VERTEX_AI_AGENT_ENGINE_AGENT.value:
+        agent_manager = LangGraphVertexAIAgentEngineAgentManager(
             prompt=init_prompt,
             industry_type=industry_type,
-            model_name=agent_foundation_model
+            model_name=agent_foundation_model,
+            agent_engine_resource_id=agent_engine_resource_id
         )
     elif agent_orchestration_framework == OrchestrationFramework.LLAMAINDEX_AGENT.value:
         agent_manager = LlamaIndexAgentManager(
             prompt=init_prompt,
             industry_type=industry_type,
-            model_name=agent_foundation_model
+            model_name=agent_foundation_model,
+            agent_engine_resource_id=agent_engine_resource_id
         )
     else:
         # default agent orchestration is LangGraphPrebuiltAgentManager
         agent_manager = LangGraphPrebuiltAgentManager(
             prompt=init_prompt,
             industry_type=industry_type,
-            model_name=agent_foundation_model
+            model_name=agent_foundation_model,
+            agent_engine_resource_id=agent_engine_resource_id
         )
 
     return agent_manager

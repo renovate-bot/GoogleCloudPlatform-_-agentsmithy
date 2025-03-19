@@ -13,28 +13,30 @@
 # limitations under the License.
 
 # gcloud builds submit --config deployment/cd/dev.yaml .
+# or gcloud builds submit --config deployment/cd/dev.yaml --substitutions _SUFFIX=-staging .
 
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
       - '-t'
-      - 'us-central1-docker.pkg.dev/agentsmithy-dev/agent-smithy-repository/agent_runtime:latest'
+      - 'us-central1-docker.pkg.dev/agentsmithy-dev/agent-smithy-repository/agent_runtime${_SUFFIX}:latest'
       - '.'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'us-central1-docker.pkg.dev/agentsmithy-dev/agent-smithy-repository/agent_runtime:latest'
+      - 'us-central1-docker.pkg.dev/agentsmithy-dev/agent-smithy-repository/agent_runtime${_SUFFIX}:latest'
 
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
-      - 'test-agent-runtime'
+      - 'agent-runtime${_SUFFIX}'
       - '--image'
-      - 'us-central1-docker.pkg.dev/agentsmithy-dev/agent-smithy-repository/agent_runtime:latest'
+      - 'us-central1-docker.pkg.dev/agentsmithy-dev/agent-smithy-repository/agent_runtime${_SUFFIX}:latest'
+      - '--allow-unauthenticated'
       - '--platform'
       - 'managed'
       - '--region'
@@ -42,7 +44,10 @@ steps:
       - '--memory'
       - '1G'
       - '--env-vars-file'
-      - 'deployment/env/dev.yaml'
+      - 'deployment/config/dev.yaml'
 
 options:
   substitution_option: 'ALLOW_LOOSE'
+
+substitutions:
+  _SUFFIX: "" # Default to empty string if no suffix is provided

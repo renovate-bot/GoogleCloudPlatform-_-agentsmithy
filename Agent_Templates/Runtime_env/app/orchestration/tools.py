@@ -58,28 +58,32 @@ compressor = get_compressor(project_id=PROJECT_ID)
 def retrieve_info(query: str) -> tuple[str, List[Document]]:
     """
     Use this when you need additional information to answer a question.
-    Useful for retrieving relevant documents based on a query.
+    Useful for retrieving relevant information based on a query.
 
     Available documents:
-       Finance: `investments_data`: This data contains structured data about various
-        investment options, including ETFs and individual stocks. Each entry provides
-        key information like ticker symbol, market, investment rating, a textual
-        overview, and an investment analysis. This data facilitates quantitative and
-        qualitative investment research and analysis, potentially enabling automated
-        insights generation.
+       Finance: `Alphabet Investor PDFs`: This data contains quarterly earnings releases
+        and annual reports for Alphabet for every quarter since 2004. The Annual reports include 
+        financial statements (balance sheet, income statement, cash flow statement), a letter to
+        shareholders, management discussion and analysis (MD&A), and information on corporate governance.
+        The quarterly earnings releases also contain key financial statements like the income statement,
+        balance sheet, and cash flow statement, along with management commentary and analysis of
+        quarterly performance.
+        Dataset can be found here:
+        https://console.cloud.google.com/storage/browser/cloud-samples-data/gen-app-builder/search/alphabet-investor-pdfs
+
        HealthCare: `PriMock57 Healthcare consultations`: This dataset consists of 57
         mock medical primary care consultations held over 5 days by 7
         Babylon clinicians and 57 Babylon employees acting as patients,
         using case cards with presenting complaints, symptoms, medical
         & general history etc.
-      Retail: `Google Store`: This data is a list of pages from the Google Store from
+        Dataset can be found here:
+        https://console.cloud.google.com/storage/browser/cloud-samples-data/vertex-ai/medlm/primock57/transcripts
+
+      Retail: `Google Store`: This data is a list of html web pages from the Google Store from
         2023. It represents a listing of products, details, prices, etc related to
         Google products.
-
-      TODO
-      Retail: `Toy Products`: This dataset provides a comprehensive listing of a toy
-        product catalog. Each row represents a unique product with attributes like
-        name, manufacturer, price, description, and product information.
+        Dataset can be found here:
+        https://console.cloud.google.com/storage/browser/cloud-samples-data/dialogflow-cx/google-store
 
     Args:
         query (str): The user's question or search query.
@@ -212,23 +216,32 @@ llama_retriever = VertexAISearchRetriever(
 def llamaindex_query_engine_tool(query: str) -> str:
     """
     Use this when you need additional information to answer a question.
-    Useful for retrieving relevant documents based on a query.
+    Useful for retrieving relevant information based on a query.
 
     Available documents:
-       Finance: `investments_data`: This data contains structured data about various
-        investment options, including ETFs and individual stocks. Each entry provides
-        key information like ticker symbol, market, investment rating, a textual
-        overview, and an investment analysis. This data facilitates quantitative and
-        qualitative investment research and analysis, potentially enabling automated
-        insights generation.
+       Finance: `Alphabet Investor PDFs`: This data contains quarterly earnings releases
+        and annual reports for Alphabet for every quarter since 2004. The Annual reports include 
+        financial statements (balance sheet, income statement, cash flow statement), a letter to
+        shareholders, management discussion and analysis (MD&A), and information on corporate governance.
+        The quarterly earnings releases also contain key financial statements like the income statement,
+        balance sheet, and cash flow statement, along with management commentary and analysis of
+        quarterly performance.
+        Dataset can be found here:
+        https://console.cloud.google.com/storage/browser/cloud-samples-data/gen-app-builder/search/alphabet-investor-pdfs
+
        HealthCare: `PriMock57 Healthcare consultations`: This dataset consists of 57
         mock medical primary care consultations held over 5 days by 7
         Babylon clinicians and 57 Babylon employees acting as patients,
         using case cards with presenting complaints, symptoms, medical
         & general history etc.
-      Retail: `Google Store`: This data is a list of pages from the Google Store from
+        Dataset can be found here:
+        https://console.cloud.google.com/storage/browser/cloud-samples-data/vertex-ai/medlm/primock57/transcripts
+
+      Retail: `Google Store`: This data is a list of html web pages from the Google Store from
         2023. It represents a listing of products, details, prices, etc related to
         Google products.
+        Dataset can be found here:
+        https://console.cloud.google.com/storage/browser/cloud-samples-data/dialogflow-cx/google-store
 
     Args:
         query (str): The user's question or search query.

@@ -17,7 +17,6 @@
 import json
 import logging
 import os
-from typing import Generator
 import uuid
 
 from fastapi import FastAPI
@@ -30,11 +29,11 @@ from app.orchestration.config import (
     AGENT_INDUSTRY_TYPE,
     AGENT_ORCHESTRATION_FRAMEWORK,
     AGENT_FOUNDATION_MODEL,
-    USER_AGENT
+    USER_AGENT,
+    AGENT_ENGINE_RESOURCE_ID
 )
 from app.orchestration.server_utils import get_agent_from_config
 from app.utils.input_types import Feedback, RootInput, InnerInputChat, default_serialization
-# from app.utils.output_types import EndEvent, Event
 from app.utils.tracing import CloudTraceLoggingSpanExporter
 
 # The events that are supported by the UI Frontend
@@ -78,7 +77,8 @@ except Exception as e:
 agent_manager = get_agent_from_config(
     agent_orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK,
     industry_type=AGENT_INDUSTRY_TYPE,
-    agent_foundation_model=AGENT_FOUNDATION_MODEL
+    agent_foundation_model=AGENT_FOUNDATION_MODEL,
+    agent_engine_resource_id=AGENT_ENGINE_RESOURCE_ID
 )
 
 async def stream_event_response(input_chat: InnerInputChat):

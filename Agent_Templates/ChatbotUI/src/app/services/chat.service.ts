@@ -34,9 +34,7 @@ export class ChatService {
       this.sessionService.createSession();
     }
 
-    const headers = new HttpHeaders({
-      'Authorization': 'Bearer <token goes here>',
-      'Content-Type': 'application/json' });
+    const headers = new HttpHeaders({'Content-Type': 'application/json' });
 
     query = query.replace(/\s+/g, " ").trim();
     const body: CreateChatRequest = {

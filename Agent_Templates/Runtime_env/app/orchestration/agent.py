@@ -7,6 +7,7 @@
 """Module used to define and interact with agent orchestrators."""
 
 from abc import ABC, abstractmethod
+import json
 from typing import AsyncGenerator, Generator, Dict, Any, Optional
 import uuid
 
@@ -20,7 +21,6 @@ from langchain_google_vertexai import ChatVertexAI
 from langchain_google_vertexai.model_garden import ChatAnthropicVertex
 from langgraph.prebuilt import create_react_agent as langgraph_create_react_agent
 from vertexai.preview import reasoning_engines # TODO: update this when it becomes agent engine
-from vertexai import agent_engines
 
 # LlamaIndex
 from llama_index.core import Settings
@@ -28,17 +28,11 @@ from llama_index.core.agent import ReActAgent
 from llama_index.llms.langchain import LangChainLLM
 
 from app.orchestration.constants import GEMINI_FLASH_20_LATEST
-from app.orchestration.config import (
-    USER_AGENT,
-    AGENT_DESCRIPTION
-)
 from app.orchestration.enums import OrchestrationFramework
 from app.orchestration.tools import (
     get_tools,
     get_llamaindex_tools
 )
-from app.utils.utils import get_requirements_from_toml
-# from app.utils.output_types import OnChatModelStreamEvent, ChatModelStreamData
 
 
 class BaseAgentManager(ABC):
@@ -54,6 +48,7 @@ class BaseAgentManager(ABC):
         industry_type: str,
         location: str,
         orchestration_framework: str,
+        agent_engine_resource_id: str,
         model_name: str,
         max_retries: int,
         max_output_tokens: int,
@@ -71,6 +66,7 @@ class BaseAgentManager(ABC):
             industry_type: The agent industry type to use. Correlates to tool configs.
             location: The GCP location to run the chat model.
             orchestration_framework: The type of agent framework to use.
+            agent_engine_resource_id: The Resource ID of the deployed AE Agent (if using AE).
             model_name: The valid name of the LLM to use for the agent.
             max_retries: Maximum number of times to retry the query on a failure.
             max_output_tokens: Maximum amount of text output from one prompt.
@@ -85,6 +81,7 @@ class BaseAgentManager(ABC):
         self.industry_type = industry_type
         self.location = location
         self.orchestration_framework = orchestration_framework
+        self.agent_engine_resource_id = agent_engine_resource_id
         self.model_name = model_name
         self.max_retries = max_retries
         self.max_output_tokens = max_output_tokens
@@ -144,7 +141,7 @@ class BaseAgentManager(ABC):
                     # max_output_tokens=self.max_output_tokens,
                     ## for now, claude is only available in us-east5 and europe-west1
                     # location = self.location,
-                    location = "us-east5",
+                    location="us-east5",
                     temperature=self.temperature,
                     top_p=self.top_p,
                     top_k=self.top_k,
@@ -189,6 +186,7 @@ class LangChainPrebuiltAgentManager(BaseAgentManager):
         prompt: str,
         industry_type: str,
         location: Optional[str] = "us-central1",
+        agent_engine_resource_id: Optional[str] = None,
         model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
         max_retries: Optional[int] = 6,
         max_output_tokens: Optional[int] = None,
@@ -203,6 +201,7 @@ class LangChainPrebuiltAgentManager(BaseAgentManager):
             industry_type=industry_type,
             location=location,
             orchestration_framework=OrchestrationFramework.LANGCHAIN_PREBUILT_AGENT.value,
+            agent_engine_resource_id=agent_engine_resource_id,
             model_name=model_name,
             max_retries=max_retries,
             max_output_tokens=max_output_tokens,
@@ -289,6 +288,7 @@ class LangGraphPrebuiltAgentManager(BaseAgentManager):
         prompt: str,
         industry_type: str,
         location: Optional[str] = "us-central1",
+        agent_engine_resource_id: Optional[str] = None,
         model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
         max_retries: Optional[int] = 6,
         max_output_tokens: Optional[int] = None,
@@ -303,6 +303,7 @@ class LangGraphPrebuiltAgentManager(BaseAgentManager):
             industry_type=industry_type,
             location=location,
             orchestration_framework=OrchestrationFramework.LANGGRAPH_PREBUILT_AGENT.value,
+            agent_engine_resource_id=agent_engine_resource_id,
             model_name=model_name,
             max_retries=max_retries,
             max_output_tokens=max_output_tokens,
@@ -371,15 +372,16 @@ class LangGraphPrebuiltAgentManager(BaseAgentManager):
             raise RuntimeError(f"Unexpected error. {e}") from e
 
 
-class LangChainVertexAIReasoningEngineAgentManager(BaseAgentManager):
+class LangChainVertexAIAgentEngineAgentManager(BaseAgentManager):
     """
-    AgentManager subclass for Vertex AI Reasoning Engine LangChain orchestration.
+    AgentManager subclass for Vertex AI Agent Engine LangChain orchestration.
     """
     def __init__(
         self,
         prompt: str,
         industry_type: str,
         location: Optional[str] = "us-central1",
+        agent_engine_resource_id: Optional[str] = None,
         model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
         max_retries: Optional[int] = 6,
         max_output_tokens: Optional[int] = None,
@@ -393,7 +395,8 @@ class LangChainVertexAIReasoningEngineAgentManager(BaseAgentManager):
             prompt=prompt,
             industry_type=industry_type,
             location=location,
-            orchestration_framework=OrchestrationFramework.LANGCHAIN_VERTEX_AI_REASONING_ENGINE_AGENT.value,
+            orchestration_framework=OrchestrationFramework.LANGCHAIN_VERTEX_AI_AGENT_ENGINE_AGENT.value,
+            agent_engine_resource_id=agent_engine_resource_id,
             model_name=model_name,
             max_retries=max_retries,
             max_output_tokens=max_output_tokens,
@@ -407,19 +410,23 @@ class LangChainVertexAIReasoningEngineAgentManager(BaseAgentManager):
 
     def create_agent_executor(self):
         """
-        Creates a Vertex AI Reasoning Engine Langchain Agent executor.
+        Creates a Vertex AI Agent Engine Langchain Agent executor.
         """
-        langchain_agent = reasoning_engines.LangchainAgent(
-            prompt=self.prompt,
-            model=self.model_name,
-            tools=self.tools,
-            agent_executor_kwargs={
-                'return_intermediate_steps': self.return_steps,
-                'verbose': self.verbose
-            },
-            enable_tracing=True
-        )
-        langchain_agent.set_up()
+        # If agent_engine_resource_id is provided, use the deployed Agent Engine
+        if self.agent_engine_resource_id:
+            langchain_agent = reasoning_engines.ReasoningEngine(self.agent_engine_resource_id)
+        else:
+            langchain_agent = reasoning_engines.LangchainAgent(
+                prompt=self.prompt,
+                model=self.model_name,
+                tools=self.tools,
+                agent_executor_kwargs={
+                    'return_intermediate_steps': self.return_steps,
+                    'verbose': self.verbose
+                },
+                enable_tracing=True
+            )
+            langchain_agent.set_up()
         return langchain_agent
 
 
@@ -428,7 +435,7 @@ class LangChainVertexAIReasoningEngineAgentManager(BaseAgentManager):
         input: Dict[str, Any],
     ) -> AsyncGenerator[Dict, Any]:
         """
-        Asynchronously streams the Agent output using Vertex AI reasoning engine.
+        Asynchronously streams the Agent output using Vertex AI Agent engine.
 
         Args:
             input: The list of messages to send to the model as input.
@@ -443,22 +450,22 @@ class LangChainVertexAIReasoningEngineAgentManager(BaseAgentManager):
             for chunk in self.agent_executor.stream_query(
                 input=input
             ):
-                # Set the run_ids using the one from the server
                 chunk["messages"] = [{**msg, "kwargs": {**msg["kwargs"], "id": input["run_id"]}} for msg in chunk["messages"]]
                 yield {"agent": chunk}
         except Exception as e:
             raise RuntimeError(f"Unexpected error. {e}") from e
 
 
-class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
+class LangGraphVertexAIAgentEngineAgentManager(BaseAgentManager):
     """
-    AgentManager subclass for Vertex AI Reasoning Engine LangGraph orchestration.
+    AgentManager subclass for Vertex AI Agent Engine LangGraph orchestration.
     """
     def __init__(
         self,
         prompt: str,
         industry_type: str,
         location: Optional[str] = "us-central1",
+        agent_engine_resource_id: Optional[str] = None,
         model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
         max_retries: Optional[int] = 6,
         max_output_tokens: Optional[int] = None,
@@ -472,7 +479,8 @@ class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
             prompt=prompt,
             industry_type=industry_type,
             location=location,
-            orchestration_framework=OrchestrationFramework.LANGGRAPH_VERTEX_AI_REASONING_ENGINE_AGENT.value,
+            orchestration_framework=OrchestrationFramework.LANGGRAPH_VERTEX_AI_AGENT_ENGINE_AGENT.value,
+            agent_engine_resource_id=agent_engine_resource_id,
             model_name=model_name,
             max_retries=max_retries,
             max_output_tokens=max_output_tokens,
@@ -486,15 +494,19 @@ class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
 
     def create_agent_executor(self):
         """
-        Creates a Vertex AI Reasoning Engine LangGraph Agent executor.
+        Creates a Vertex AI Agent Engine LangGraph Agent executor.
         """
-        langgraph_agent = reasoning_engines.LanggraphAgent(
-            model=self.model_name,
-            tools=self.tools,
-            runnable_kwargs={"prompt": self.prompt, "debug": self.verbose},
-            enable_tracing=True
-        )
-        langgraph_agent.set_up()
+        # If agent_engine_resource_id is provided, use the deployed Agent Engine
+        if self.agent_engine_resource_id:
+            langgraph_agent = reasoning_engines.ReasoningEngine(self.agent_engine_resource_id)
+        else:
+            langgraph_agent = reasoning_engines.LanggraphAgent(
+                model=self.model_name,
+                tools=self.tools,
+                runnable_kwargs={"prompt": self.prompt, "debug": self.verbose},
+                enable_tracing=True
+            )
+            langgraph_agent.set_up()
         return langgraph_agent
 
 
@@ -503,7 +515,7 @@ class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
         input: Dict[str, Any],
     ) -> AsyncGenerator[Dict, Any]:
         """
-        Asynchronously streams the Agent output using Vertex AI reasoning engine.
+        Asynchronously streams the Agent output using Vertex AI Agent Engine.
 
         Args:
             input: The list of messages to send to the model as input.
@@ -521,7 +533,12 @@ class LangGraphVertexAIReasoningEngineAgentManager(BaseAgentManager):
             ):
                 # Override the each of the run_ids with the one from the server
                 chunk["messages"] = [{**msg, "kwargs": {**msg["kwargs"], "id": input["run_id"]}} for msg in chunk["messages"]]
-                yield {"agent": chunk}
+
+                if self.agent_engine_resource_id:
+                    if chunk["messages"][-1]["id"][-1] == "AIMessage":
+                        yield {"agent": chunk}
+                else:
+                    yield {"agent": chunk}
         except Exception as e:
             raise RuntimeError(f"Unexpected error. {e}") from e
 
@@ -535,6 +552,7 @@ class LlamaIndexAgentManager(BaseAgentManager):
         prompt: str,
         industry_type: str,
         location: Optional[str] = "us-central1",
+        agent_engine_resource_id: Optional[str] = None,
         model_name: Optional[str] = GEMINI_FLASH_20_LATEST,
         max_retries: Optional[int] = 6,
         max_output_tokens: Optional[int] = None,
@@ -549,6 +567,7 @@ class LlamaIndexAgentManager(BaseAgentManager):
             industry_type=industry_type,
             location=location,
             orchestration_framework=OrchestrationFramework.LLAMAINDEX_AGENT.value,
+            agent_engine_resource_id=agent_engine_resource_id,
             model_name=model_name,
             max_retries=max_retries,
             max_output_tokens=max_output_tokens,
@@ -577,12 +596,13 @@ class LlamaIndexAgentManager(BaseAgentManager):
         """
         # setup the index/query llm for Vertex Search
         Settings.llm = LangChainLLM(self.model_obj)
-        return ReActAgent.from_tools(
+        llamaindex_agent = ReActAgent.from_tools(
             prompt=self.prompt,
             llm = LangChainLLM(self.model_obj),
             tools=self.tools,
             verbose=self.verbose
         )
+        return llamaindex_agent
 
 
     def get_response_obj(
@@ -639,12 +659,20 @@ class LlamaIndexAgentManager(BaseAgentManager):
             An error is encountered during streaming.
         """
         try:
-            content = input["messages"][0]["content"] # TODO: chat_history
-            response = await self.agent_executor.aquery(content)
-            yield self.get_response_obj(
-                content=response.response,
-                run_id=input["run_id"]
-            )
+            if self.agent_engine_resource_id:
+                llamaindex_agent = reasoning_engines.ReasoningEngine(self.agent_engine_resource_id)
+                # Uses the stream_query function below
+                response = llamaindex_agent.stream_query(input=input)
+                for chunk in response:
+                    yield chunk
+            else:
+                # Convert the messages into a string
+                content = "\n".join(f"[{msg['type']}]: {msg['content']}" for msg in input["messages"])
+                response = await self.agent_executor.aquery(content)
+                yield self.get_response_obj(
+                    content=response.response,
+                    run_id=input["run_id"]
+                )
 
         except Exception as e:
             raise RuntimeError(f"Unexpected error. {e}") from e
@@ -669,8 +697,13 @@ class LlamaIndexAgentManager(BaseAgentManager):
             An error is encountered during processing.
         """
         run_id = uuid.uuid4()
+
+        # If using Agent Engine, explicitly re-set the index/query llm for Vertex Search
+        Settings.llm = self.model_obj
+
         try:
-            content = input["messages"][0]["content"] # TODO: chat_history
+            # Convert the messages into a string
+            content = "\n".join(f"[{msg['type']}]: {msg['content']}" for msg in input["messages"])
             response = self.agent_executor.query(content)
             yield self.get_response_obj(
                 content=response.response,
@@ -679,31 +712,3 @@ class LlamaIndexAgentManager(BaseAgentManager):
 
         except Exception as e:
             raise RuntimeError(f"Unexpected error. {e}") from e
-
-
-def deploy_agent_to_agent_engine(agent):
-    """
-    Deploys the Vertex AI agent engine to a remote managed endpoint.
-
-    Args:
-        agent: The agent to be deployed to agent engine.
-            Will be an .agent_executor in the case of langchain/langgraph
-
-    Returns:
-        Remote Agent Engine agent.
-
-    Exception:
-        An error is encountered during deployment.
-    """
-    try:
-        remote_agent = agent_engines.create(
-            agent,
-            requirements=get_requirements_from_toml(),
-            display_name=USER_AGENT,
-            description=AGENT_DESCRIPTION,
-            extra_packages=["./app", "./deployment/config"],
-        )
-    except Exception as e:
-        raise RuntimeError(f"Error deploying Agent Engine Agent. {e}") from e
-
-    return remote_agent
