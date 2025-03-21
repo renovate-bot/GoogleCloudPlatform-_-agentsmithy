@@ -18,7 +18,9 @@ import { CreateChatRequest } from '../models/chat.model';
 import { environment } from 'src/environments/environment';
 import { SessionService } from './user/session.service';
 
-const chatsUrl = `${environment.backendURL}/chats`;
+// include "/" or ":" in the environment.ts file
+const chatsUrl = `${environment.backendURL}streamQuery`;
+
 
 @Injectable({
   providedIn: 'root'
@@ -32,19 +34,21 @@ export class ChatService {
       this.sessionService.createSession();
     }
 
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    const headers = new HttpHeaders({'Content-Type': 'application/json' });
 
     query = query.replace(/\s+/g, " ").trim();
     const body: CreateChatRequest = {
       input: {
-        messages: [
-          {
-            content: query,
-            type: "human",
-          }
-        ],
-        session_id: this.sessionService.getSession()!,
-      },
+        input: {
+          messages: [
+            {
+              content: query,
+              type: "human",
+            }
+          ],
+          session_id: this.sessionService.getSession()!,
+        }
+      }
     };
 
     return this.http

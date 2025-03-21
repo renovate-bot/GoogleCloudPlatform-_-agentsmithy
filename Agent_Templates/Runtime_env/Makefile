@@ -11,20 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM python:3.11-slim
 
-RUN pip install  --no-cache-dir poetry==1.6.1
+test:
+	poetry run pytest tests/unit && poetry run pytest tests/integration
 
-RUN poetry config virtualenvs.create false
+backend:
+	poetry install
+	poetry run uvicorn app.server:app --host 0.0.0.0 --port 8000 --reload
 
-WORKDIR /code
+load_test:
+	poetry run locust -f tests/load_test/load_test.py -H $RUN_SERVICE_URL --headless -t 30s -u 60 -r 2 --csv=tests/load_test/.results/results --html=tests/load_test/.results/report.html
 
-COPY ./pyproject.toml ./README.md ./poetry.lock* ./
+lint:
+	poetry run codespell
+	poetry run flake8 .
+	poetry run pylint .
+	poetry run mypy .
+	poetry run black .
 
-COPY ./app ./app
-
-RUN poetry install  --no-interaction --no-ansi --no-dev
-
-EXPOSE 8080
-
-CMD ["uvicorn", "app.server:app", "--host", "0.0.0.0", "--port", "8080"]
+sanity:
+	sh tests/sanity.sh

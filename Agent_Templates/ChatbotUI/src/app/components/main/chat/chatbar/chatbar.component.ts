@@ -22,6 +22,7 @@ import { animate, sequence, state, style, transition, trigger } from '@angular/a
 import { SpeechToTextService } from 'src/app/services/speech-to-text';
 import { Message, SuggestionData } from 'src/app/models/messegeType.model';
 import { HttpDownloadProgressEvent, HttpEvent, HttpEventType } from '@angular/common/http';
+import { parse } from 'uuid';
 
 @Component({
   selector: 'app-chatbar',
@@ -301,48 +302,121 @@ export class ChatbarComponent implements OnDestroy {
   }
 
   handleBotResponse(answer: string) {
+    // let events: string[] = answer.split("\n");
+    // console.log(events)
+    // events.pop();
+
+    // let parsedEvent = JSON.parse(events[0]);
+    // let answerId = parsedEvent.agent.messages[0].kwargs.id; // Access the "id" from the kwargs
+
+    // if ( answerId === this.conversation[0].chat_id) {
+    //   let lastEventParsed = JSON.parse(events.slice(-1)[0]);
+    //   // Access the content from the kwargs of the last event's message
+    //   let lastMessage = lastEventParsed.agent.messages.slice(-1)[0];
+
+    //   if(lastMessage.kwargs.type === "ai") { // Check if it is an aimessage
+    //     this.conversation[0].botAnswer += lastMessage.kwargs.content;
+    //   }
+    //   return;
+    // }
+
+    // let response: Chat = {
+    //   id: answerId,
+    //   question: this.chatQuery,
+    //   answer: "",
+    //   suggested_questions: []
+    // }
+    
+    // let endTime = new Date().getTime();
+    // this.assignId(response?.id);
+
+    // let singleMesage: Message = {
+    //   body: "",
+    //   botAnswer: response.answer,
+    //   type: 'bot',
+    //   responseTime: ((endTime - this.botStartTime) / 1000).toString(),
+    //   shareable: true,
+    //   botStartTime: this.botStartTime.toString(),
+    //   extras: {
+    //     like: false,
+    //     dislike: false,
+    //     delete: false,
+    //   },
+    //   chat_id: response.id!
+    // };
+
+    // this.conversation.unshift(singleMesage);
+    // this.setSuggestedQuestionInChat(response, endTime);
+    // this.showLoader = false;
+    // this.clearTimeoutForLoaderText();
+    // this.isSuggestedQuestion = '';
+
     let events: string[] = answer.split("\n");
-    events.pop();
-    let answerId = (JSON.parse(events[0]) as ChatEvent ).data.run_id
 
-    if ( answerId === this.conversation[0].chat_id) {
-      let lastEvent: ChatEvent = JSON.parse(events.slice(-1)[0]);
-      if(lastEvent.event == "on_chat_model_stream") {
-        this.conversation[0].botAnswer += lastEvent.data.chunk!.content
-      }
-      return;
-    } 
+    // Filter out empty strings that might result from extra newlines.
+    events = events.filter(event => event.trim() !== "");
 
-    let response: Chat = {
-      id: answerId,
-      question: this.chatQuery,
-      answer: "",
-      suggested_questions: []
+    if (events.length === 0) {
+        return; // Nothing to process
     }
     
-    let endTime = new Date().getTime();
-    this.assignId(response?.id);
+    try {
+        let parsedEvent = JSON.parse(events[0]);
+        let answerId = parsedEvent.agent.messages[0].kwargs.id; // Access the "id" from the kwargs
 
-    let singleMesage: Message = {
-      body: "",
-      botAnswer: response.answer,
-      type: 'bot',
-      responseTime: ((endTime - this.botStartTime) / 1000).toString(),
-      shareable: true,
-      botStartTime: this.botStartTime.toString(),
-      extras: {
-        like: false,
-        dislike: false,
-        delete: false,
-      },
-      chat_id: response.id!
-    };
+        if (answerId === this.conversation[0].chat_id) {
+            // Process the *last* event.  Use .at(-1) for clarity and safety.
+            const lastEventString = events.at(-1);
+            if (!lastEventString) {
+                console.warn("No last event found after splitting.");
+                return; // Or handle the error appropriately
+            }
 
-    this.conversation.unshift(singleMesage);
-    this.setSuggestedQuestionInChat(response, endTime);
-    this.showLoader = false;
-    this.clearTimeoutForLoaderText();
-    this.isSuggestedQuestion = '';
+            const lastEventParsed = JSON.parse(lastEventString);
+            const lastMessage = lastEventParsed.agent.messages.at(-1);
+
+            if (lastMessage && lastMessage.kwargs.type === "ai") {
+                this.conversation[0].botAnswer += lastMessage.kwargs.content;
+            }
+            return;
+        }
+
+        let response: Chat = {
+          id: answerId,
+          question: this.chatQuery,
+          answer: "",
+          suggested_questions: []
+        }
+        
+        let endTime = new Date().getTime();
+        this.assignId(response?.id);
+    
+        let singleMesage: Message = {
+          body: "",
+          botAnswer: response.answer,
+          type: 'bot',
+          responseTime: ((endTime - this.botStartTime) / 1000).toString(),
+          shareable: true,
+          botStartTime: this.botStartTime.toString(),
+          extras: {
+            like: false,
+            dislike: false,
+            delete: false,
+          },
+          chat_id: response.id!
+        };
+    
+        this.conversation.unshift(singleMesage);
+        this.setSuggestedQuestionInChat(response, endTime);
+        this.showLoader = false;
+        this.clearTimeoutForLoaderText();
+        this.isSuggestedQuestion = '';
+
+    } catch (error) {
+        console.error("Error parsing JSON:", error);
+        console.error("Problematic event data:", answer); // Log the raw event data
+        // Consider adding error handling here, such as retrying or logging.
+    }
   }
 
   // adds Suggested question as another message

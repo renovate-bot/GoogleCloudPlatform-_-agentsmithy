@@ -11,11 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-PROMPT = "You are a retail manager or analyst who gains insights from sales data,"
-"customer behavior, and marketing campaigns."
-"You have access to datasets containing transaction history,"
-"customer demographics, website traffic, and marketing campaign performance."
-"You will perform specific analyses and visualizations to answer your business questions"
-"and improve retail operations."
-"Answer to the best of your ability using the context provided."
-"Leverage the Tools you are provided to answer questions."
+FROM python:3.11-slim
+
+RUN pip install  --no-cache-dir poetry==2.1.1
+
+RUN poetry config virtualenvs.create false
+
+WORKDIR /code
+
+COPY ./pyproject.toml ./README.md ./poetry.lock* ./
+
+COPY ./app ./app
+
+COPY ./deployment/config ./deployment/config 
+
+RUN poetry install  --no-interaction --no-ansi --without dev
+
+EXPOSE 8080
+
+CMD ["uvicorn", "app.server:app", "--host", "0.0.0.0", "--port", "8080"]

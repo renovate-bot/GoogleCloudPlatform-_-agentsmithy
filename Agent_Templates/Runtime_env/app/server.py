@@ -17,18 +17,24 @@
 import json
 import logging
 import os
-from typing import AsyncGenerator
 import uuid
 
-from app.chain import chain
-from app.utils.input_types import Feedback, Input, InputChat, default_serialization
-from app.utils.output_types import EndEvent, Event
-from app.utils.tracing import CloudTraceLoggingSpanExporter
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import logging as google_cloud_logging
 from traceloop.sdk import Instruments, Traceloop
+
+from app.orchestration.config import (
+    AGENT_INDUSTRY_TYPE,
+    AGENT_ORCHESTRATION_FRAMEWORK,
+    AGENT_FOUNDATION_MODEL,
+    USER_AGENT,
+    AGENT_ENGINE_RESOURCE_ID
+)
+from app.orchestration.server_utils import get_agent_from_config
+from app.utils.input_types import Feedback, RootInput, InnerInputChat, default_serialization
+from app.utils.tracing import CloudTraceLoggingSpanExporter
 
 # The events that are supported by the UI Frontend
 SUPPORTED_EVENTS = [
@@ -41,14 +47,16 @@ logging_client = google_cloud_logging.Client()
 logger = logging_client.logger(__name__)
 
 def configure_cors(app):
-    if not os.getenv("FRONTEND_URL"):
-        url = "http://localhost:4200"
-    else:
-        url = os.getenv("FRONTEND_URL")
+    # urls = ["http://localhost:4200"]
+    # if os.getenv("FRONTEND_URL"):
+    #     urls.append(os.getenv("FRONTEND_URL"))
+
+    # TODO: update with the actual urls when dev work is complete
+    urls = ["*"]
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[url],
+        allow_origins=urls,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -57,7 +65,7 @@ def configure_cors(app):
 # Initialize Traceloop
 try:
     Traceloop.init(
-        app_name="Sample Chatbot Application",
+        app_name=USER_AGENT,
         disable_batch=False,
         exporter=CloudTraceLoggingSpanExporter(),
         instruments={Instruments.VERTEXAI, Instruments.LANGCHAIN},
@@ -65,11 +73,19 @@ try:
 except Exception as e:
     logging.error("Failed to initialize Traceloop: %s", e)
 
+# Get agent based on user selection
+agent_manager = get_agent_from_config(
+    agent_orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK,
+    industry_type=AGENT_INDUSTRY_TYPE,
+    agent_foundation_model=AGENT_FOUNDATION_MODEL,
+    agent_engine_resource_id=AGENT_ENGINE_RESOURCE_ID
+)
 
-async def stream_event_response(input_chat: InputChat) -> AsyncGenerator[str, None]:
+async def stream_event_response(input_chat: InnerInputChat):
     """Stream events in response to an input chat."""
     run_id = uuid.uuid4()
     input_dict = input_chat.model_dump()
+    input_dict["run_id"] = str(run_id)
 
     Traceloop.set_association_properties(
         {
@@ -81,16 +97,22 @@ async def stream_event_response(input_chat: InputChat) -> AsyncGenerator[str, No
         }
     )
 
-    yield json.dumps(
-        Event(event="metadata", data={"run_id": str(run_id)}),
-        default=default_serialization,
-    ) + "\n"
+    # yield json.dumps(
+    #     Event(event="metadata", data={"run_id": str(run_id)}),
+    #     default=default_serialization,
+    # ) + "\n"
 
-    async for data in chain.astream_events(input_dict, version="v2"):
-        if data["event"] in SUPPORTED_EVENTS:
-            yield json.dumps(data, default=default_serialization) + "\n"
+    # for data in agent_manager.astream(input_dict):
+    #     yield json.dumps(
+    #         # Event(event="on_chat_model_stream", data={"chunk": data}),
+    #         # data,
+    #         default=default_serialization
+    #     ) + "\n"
 
-    yield json.dumps(EndEvent(), default=default_serialization) + "\n"
+    async for data in agent_manager.astream(input_dict):
+        yield json.dumps(data, default=default_serialization) + "\n"
+
+    # yield json.dumps(EndEvent(), default=default_serialization) + "\n"
 
 
 # Routes
@@ -106,11 +128,11 @@ async def collect_feedback(feedback_dict: Feedback) -> None:
     logger.log_struct(feedback_dict.model_dump(), severity="INFO")
 
 
-@app.post("/chats")
-async def stream_chat_events(request: Input) -> StreamingResponse:
+@app.post("/streamQuery")
+async def stream_chat_events(request: RootInput) -> StreamingResponse:
     """Stream chat events in response to an input request."""
     return StreamingResponse(
-        stream_event_response(input_chat=request.input), media_type="text/event-stream"
+        stream_event_response(input_chat=request.input.input), media_type="text/event-stream"
     )
 
 configure_cors(app)

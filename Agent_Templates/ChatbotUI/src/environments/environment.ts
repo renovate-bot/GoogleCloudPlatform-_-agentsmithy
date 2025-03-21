@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 export const environment = {
-  backendURL: "http://localhost:8000",
-  chatbotName: "Smithy",
+  backendURL: "http://localhost:8000/",
+  // backendURL: "https://test-agent-runtime-599247973214.us-central1.run.app/",
+  // backendURL: "https://us-central1-aiplatform.googleapis.com/v1beta1/projects/599247973214/locations/us-central1/reasoningEngines/6624803847955021824:",
+  chatbotName: "agentsmithy-starter-agent",
 };
+

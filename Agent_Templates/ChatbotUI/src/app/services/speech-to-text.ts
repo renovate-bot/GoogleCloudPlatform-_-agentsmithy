@@ -16,7 +16,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 
 // const audioChatUrl = `http://localhost:8080/api/audio_chat`;
-const audioChatUrl = `${environment.backendURL}/audio_chat`;
+const audioChatUrl = `${environment.backendURL}audio_chat`;
 
 @Injectable({
   providedIn: 'root'
