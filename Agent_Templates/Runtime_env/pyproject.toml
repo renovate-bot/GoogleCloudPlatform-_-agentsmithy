@@ -15,7 +15,7 @@ toml = "^0.10.2"
 PyYAML = "^6.0.2"
 cloudpickle = "3.0.0"
 uvicorn = {extras = ["standard"], version = "^0.30.5"}
-langchain-google-vertexai = "^2.0.7"
+langchain-google-vertexai = "2.0.15"
 langchain = "^0.3.0"
 langgraph = "^0.2.69"
 langchain-core = "^0.3.9"
@@ -31,7 +31,7 @@ traceloop-sdk = "^0.33.12"
 opentelemetry-exporter-gcp-trace = "^1.6.0"
 opentelemetry-sdk = "^1.28.0"
 google-cloud-logging = "^3.10.0"
-google-cloud-aiplatform = {extras = ["evaluation", "agent_engines", "langchain"], version = "^1.84.0"}
+google-cloud-aiplatform = {extras = ["evaluation", "agent_engines", "langchain"], version = "1.84.0"}
 google-cloud-discoveryengine = "^0.11.14"
 grpcio = "1.70.0"
 scikit-learn = "^1.5.0"

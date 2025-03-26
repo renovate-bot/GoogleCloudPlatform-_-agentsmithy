@@ -1,4 +1,4 @@
-v# Copyright 2025 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,9 +11,19 @@ v# Copyright 2025 Google LLC
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-ariable "prod_project_id" {
+variable "prod_project_id" {
   type        = string
   description = "**Production** Google Cloud Project ID for resource deployment."
+}
+
+variable "stage_project_id" {
+  type        = string
+  description = "**Stage** Google Cloud Project ID for resource deployment."
+}
+
+variable "dev_project_id" {
+  type        = string
+  description = "**Dev** Google Cloud Project ID for resource deployment."
 }
 
 variable "region" {
@@ -22,18 +32,33 @@ variable "region" {
   default     = "us-central1"
 }
 
-variable "host_connection_name" {
-  description = "Name of the host connection you created in Cloud Build"
-  type        = string
-}
-
-variable "repository_name" {
-  description = "Name of the repository you'd like to connect to Cloud Build"
-  type        = string
-}
-
 variable "agent_name" {
   description = "Name of the Agent"
+  type        = string
+}
+
+variable "default_agents_prefix" {
+  description = "Shortname for gen ai agent resources"
+  type        = string
+}
+
+variable "vertex_ai_staging_bucket" {
+  description = "Staging bucket for vertex ai resources"
+  type        = string
+}
+
+variable "artifact_registry_repo_name" {
+  description = "The name of the artifact registry"
+  type        = string
+}
+
+variable "backend_cloud_run_service_name" {
+  description = "Backend Cloud Run Service Name"
+  type        = string
+}
+
+variable "frontend_cloud_run_service_name" {
+  description = "Frontend Cloud Run Service Name"
   type        = string
 }
 
@@ -45,31 +70,6 @@ variable "cloud_run_app_roles" {
     "roles/discoveryengine.editor",
     "roles/logging.logWriter",
     "roles/cloudtrace.agent",
-    "roles/storage.admin"
-  ]
-}
-
-variable "cicd_roles" {
-  description = "List of roles to assign to the CICD runner service account in the CICD project"
-  type        = list(string)
-  default = [
     "roles/storage.admin",
-    "roles/run.invoker",
-    "roles/aiplatform.user",
-    "roles/discoveryengine.editor",
-    "roles/logging.logWriter",
-    "roles/artifactregistry.writer",
-    "roles/cloudbuild.builds.builder"
-  ]
-}
-
-variable "cicd_sa_deployment_required_roles" {
-  description = "List of roles to assign to the CICD runner service account for the Staging and Prod projects."
-  type        = list(string)
-  default = [
-    "roles/run.developer",
-    "roles/iam.serviceAccountUser",
-    "roles/aiplatform.user",
-    "roles/storage.admin"
   ]
 }

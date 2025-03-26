@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-resource "google_artifact_registry_repository" "my-repo" {
+resource "google_artifact_registry_repository" "genai-agents-repo" {
+  for_each = local.deploy_project_ids
   location      = var.region
-  repository_id = local.artifact_registry_repo_name
+  repository_id = var.artifact_registry_repo_name
   description   = "Repo for Generative AI applications"
   format        = "DOCKER"
-  project       = var.prod_project_id
-  depends_on    = [resource.google_project_service.cicd_services, resource.google_project_service.shared_services]
+  project       = each.value
+  depends_on    = [resource.google_project_service.shared_services]
 }

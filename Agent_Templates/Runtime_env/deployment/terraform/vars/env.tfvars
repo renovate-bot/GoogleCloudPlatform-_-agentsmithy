@@ -14,13 +14,29 @@
 # Your Production Google Cloud project id
 prod_project_id = ""
 
+# Your Staging Google Cloud project id
+stage_project_id = ""
+
+# Your Dev Google Cloud project id
+dev_project_id = ""
+
 # The Google Cloud region you will use to deploy the infrastructure
 region = ""
 
-# Name of the host connection you created in Cloud Build
-host_connection_name = ""
-
-# Name of the repository you added to Cloud Build
-repository_name = ""
-
+# The name of your agent
 agent_name = ""
+
+# Be careful to follow naming guidelines (must be a short string with no numbers or dashes)
+default_agents_prefix = ""
+
+# The name of your GCP storage bucket
+vertex_ai_staging_bucket = ""
+
+# The name of the artifact registry
+artifact_registry_repo_name = ""
+
+# The name of the backend agent service
+backend_cloud_run_service_name = ""
+
+# The name of the frontend agent service
+frontend_cloud_run_service_name = ""

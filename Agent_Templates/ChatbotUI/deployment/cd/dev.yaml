@@ -12,35 +12,54 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# gcloud builds submit --config deployment/cd/dev.yaml .
+# gcloud builds submit --config deployment/cd/dev.yaml --substitutions _PROJECT_ID=<project_id> _ARTIFACT_REGISTRY_REPO_NAME=<af_name> .
 
 steps:
+  # Build and Push
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
       - '-t'
-      - 'us-central1-docker.pkg.dev/agentsmithy-dev/agent-smithy-repository/chatbot_ui:latest'
+      - '$_REGION-docker.pkg.dev/$_PROJECT_ID/$_ARTIFACT_REGISTRY_REPO_NAME/$_CONTAINER_NAME:latest'
       - '.'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'us-central1-docker.pkg.dev/agentsmithy-dev/agent-smithy-repository/chatbot_ui:latest'
+      - '$_REGION-docker.pkg.dev/$_PROJECT_ID/$_ARTIFACT_REGISTRY_REPO_NAME/$_CONTAINER_NAME:latest'
 
+  # Deploy
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
-      - 'test-chatbot-ui'
+      - '${_SERVICE_NAME}'
       - '--image'
-      - 'us-central1-docker.pkg.dev/agentsmithy-dev/agent-smithy-repository/chatbot_ui:latest'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_REGISTRY_REPO_NAME/$_CONTAINER_NAME:latest'
+      - '--allow-unauthenticated'
       - '--platform'
       - 'managed'
       - '--region'
-      - 'us-central1'
-      - '--memory'
-      - '1G'
+      - '${_REGION}'
+      - "--project"
+      - "${_PROJECT_ID}"
+      - "--min-instances"
+      - "1"
+      - "--no-cpu-throttling"
+      - "--cpu"
+      - "4"
+      - "--memory"
+      - "4Gi"
+      - "--concurrency"
+      - "40"
 
 options:
   substitution_option: 'ALLOW_LOOSE'
+
+substitutions:
+  _CONTAINER_NAME: chatbot_ui
+  _PROJECT_ID: ""
+  _ARTIFACT_REGISTRY_REPO_NAME: ""
+  _SERVICE_NAME: chatbot-ui-service
+  _REGION: us-central1

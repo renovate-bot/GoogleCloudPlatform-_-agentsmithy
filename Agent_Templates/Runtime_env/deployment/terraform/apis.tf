@@ -11,13 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-resource "google_project_service" "cicd_services" {
-  count              = length(local.cicd_services)
-  project            = var.prod_project_id
-  service            = local.cicd_services[count.index]
-  disable_on_destroy = false
-}
-
 resource "google_project_service" "shared_services" {
   for_each = {
     for pair in setproduct(keys(local.deploy_project_ids), local.shared_services) :

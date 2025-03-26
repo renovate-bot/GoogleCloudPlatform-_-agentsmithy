@@ -21,21 +21,12 @@ terraform {
   }
 }
 
-resource "google_storage_bucket" "bucket_load_test_results" {
-  name                        = "${var.prod_project_id}-${local.suffix_bucket_name_load_test_results}"
+resource "google_storage_bucket" "vertex_ai_staging_bucket" {
+  for_each = local.deploy_project_ids
+  name                        = "${var.vertex_ai_staging_bucket}"
   location                    = var.region
-  project                     = var.prod_project_id
+  project                     = each.value
   uniform_bucket_level_access = true
   force_destroy               = true
-  depends_on                  = [resource.google_project_service.cicd_services, resource.google_project_service.shared_services]
-}
-
-resource "google_storage_bucket" "logs_data_bucket" {
-  name                        = "${var.prod_project_id}-logs-data"
-  location                    = var.region
-  project                     = var.prod_project_id
-  uniform_bucket_level_access = true
-  force_destroy               = true
-
-  depends_on = [resource.google_project_service.cicd_services, resource.google_project_service.shared_services]
+  depends_on                  = [resource.google_project_service.shared_services]
 }

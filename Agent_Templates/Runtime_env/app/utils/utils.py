@@ -42,7 +42,10 @@ def get_requirements_from_toml(pyproject_file="pyproject.toml"):
                 continue
 
             if isinstance(version_info, str):
-                requirements.append(f"{package}>={version_info.replace('^', '')}")
+                if '^' in version_info:
+                    requirements.append(f"{package}>={version_info.replace('^', '')}")
+                else:
+                    requirements.append(f"{package}=={version_info}")
 
             elif isinstance(version_info, dict):
                 version = version_info.get("version")
@@ -50,7 +53,10 @@ def get_requirements_from_toml(pyproject_file="pyproject.toml"):
 
                 if extras:
                     extras_str = ",".join(extras)
-                    requirements.append(f"{package}[{extras_str}]>={version.replace('^', '')}")
+                    if '^' in version:
+                        requirements.append(f"{package}[{extras_str}]>={version.replace('^', '')}")
+                    else:
+                        requirements.append(f"{package}[{extras_str}]=={version}")
             else:
                 print(f"Warning: Unexpected dependency format for {package}: {version_info}")
 

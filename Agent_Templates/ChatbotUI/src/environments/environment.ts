@@ -11,10 +11,31 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-export const environment = {
-  backendURL: "http://localhost:8000/",
-  // backendURL: "https://test-agent-runtime-599247973214.us-central1.run.app/",
-  // backendURL: "https://us-central1-aiplatform.googleapis.com/v1beta1/projects/599247973214/locations/us-central1/reasoningEngines/6624803847955021824:",
-  chatbotName: "agentsmithy-starter-agent",
-};
 
+const env: string = 'dev';
+
+let backendURL: string;
+let chatbotName: string;
+
+switch (env) {
+  case 'prod':
+    backendURL = "https://your-production-backend.com/"; // Replace with your production URL
+    chatbotName = "your-production-chatbot-name"; // Replace with your production chatbot name
+    break;
+  case 'stage':
+    backendURL = "https://your-staging-backend.com/"; // Replace with your staging URL
+    chatbotName = "your-staging-chatbot-name"; // Replace with your staging chatbot name
+    break;
+  case 'dev':
+  default:
+    backendURL = "http://localhost:8000/";
+    chatbotName = "agentsmithy-starter-agent";
+    break;
+}
+
+export const environment = {
+  production: env === 'prod',
+  backendURL: backendURL,
+  chatbotName: chatbotName,
+  environmentName: env, 
+};

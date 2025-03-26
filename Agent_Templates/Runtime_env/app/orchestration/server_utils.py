@@ -77,6 +77,7 @@ def get_init_prompt(
 
     elif agent_orchestration_framework ==OrchestrationFramework.LLAMAINDEX_AGENT.value:
         return sys_desc + """You are designed to help with a variety of tasks, from answering questions to providing summaries to other types of analyses.
+        When you respond, do not respond with backticks (e.g. ```). Remove these from your response.
 
         ## Tools
 
