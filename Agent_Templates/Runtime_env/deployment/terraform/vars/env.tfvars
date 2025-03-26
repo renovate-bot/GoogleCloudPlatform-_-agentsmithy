@@ -27,7 +27,7 @@ region = ""
 agent_name = ""
 
 # Be careful to follow naming guidelines (must be a short string with no numbers or dashes)
-default_agents_prefix = ""
+default_agents_prefix = "genai agents"
 
 # The name of your GCP storage bucket
 vertex_ai_staging_bucket = ""
