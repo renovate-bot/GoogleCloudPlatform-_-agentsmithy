@@ -1,4 +1,3 @@
-# import importlib
 import os
 import re
 import subprocess
@@ -35,7 +34,7 @@ def read_yaml_file(filepath: str) -> dict:
 
 
 ENV_TAG = "dev"
-DEPLOY_TO_AGENT_ENGINE = True
+DEPLOY_TO_AGENT_ENGINE = False
 
 # Cloud Run services config.
 BACKEND_PATH = "Agent_Templates/Runtime_env"

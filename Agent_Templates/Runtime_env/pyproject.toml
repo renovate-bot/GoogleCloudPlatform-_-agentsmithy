@@ -33,6 +33,7 @@ opentelemetry-sdk = "^1.28.0"
 google-cloud-logging = "^3.10.0"
 google-cloud-aiplatform = {extras = ["evaluation", "agent_engines", "langchain"], version = "1.84.0"}
 google-cloud-discoveryengine = "^0.11.14"
+google-api-core = "^2.24.2"
 grpcio = "1.70.0"
 scikit-learn = "^1.5.0"
 immutabledict = "^4.2.0"

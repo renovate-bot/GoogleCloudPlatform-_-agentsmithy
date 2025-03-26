@@ -424,7 +424,7 @@ class LangChainVertexAIAgentEngineAgentManager(BaseAgentManager):
                     'return_intermediate_steps': self.return_steps,
                     'verbose': self.verbose
                 },
-                enable_tracing=True
+                enable_tracing=False
             )
             langchain_agent.set_up()
         return langchain_agent
@@ -504,7 +504,7 @@ class LangGraphVertexAIAgentEngineAgentManager(BaseAgentManager):
                 model=self.model_name,
                 tools=self.tools,
                 runnable_kwargs={"prompt": self.prompt, "debug": self.verbose},
-                enable_tracing=True
+                enable_tracing=False
             )
             langgraph_agent.set_up()
         return langgraph_agent
