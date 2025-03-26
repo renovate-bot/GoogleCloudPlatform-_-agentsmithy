@@ -41,7 +41,7 @@ def get_init_prompt(
         sys_desc = DEFAULT_AGENT_DESCRIPTION
 
     # The prebuilt langchain option is older and has a different prompt structure
-    if agent_orchestration_framework ==OrchestrationFramework.LANGCHAIN_PREBUILT_AGENT.value:
+    if agent_orchestration_framework == OrchestrationFramework.LANGCHAIN_PREBUILT_AGENT.value:
         return PromptTemplate.from_template(sys_desc + """You have access to the following tools:
                          
         TOOLS:

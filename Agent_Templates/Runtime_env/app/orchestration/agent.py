@@ -417,14 +417,14 @@ class LangChainVertexAIAgentEngineAgentManager(BaseAgentManager):
             langchain_agent = reasoning_engines.ReasoningEngine(self.agent_engine_resource_id)
         else:
             langchain_agent = reasoning_engines.LangchainAgent(
-                prompt=self.prompt,
+                # prompt=self.prompt, # Custom prompt seems to have an issue for some reason
                 model=self.model_name,
                 tools=self.tools,
                 agent_executor_kwargs={
                     'return_intermediate_steps': self.return_steps,
                     'verbose': self.verbose
                 },
-                enable_tracing=False
+                enable_tracing=True
             )
             langchain_agent.set_up()
         return langchain_agent
@@ -446,9 +446,11 @@ class LangChainVertexAIAgentEngineAgentManager(BaseAgentManager):
         Exception:
             An error is encountered during streaming.
         """
+        # Convert the messages into a string
+        content = "\n".join(f"[{msg['type']}]: {msg['content']}" for msg in input["messages"])
         try:
             for chunk in self.agent_executor.stream_query(
-                input=input
+                input={"input": content}
             ):
                 chunk["messages"] = [{**msg, "kwargs": {**msg["kwargs"], "id": input["run_id"]}} for msg in chunk["messages"]]
                 yield {"agent": chunk}
@@ -504,7 +506,7 @@ class LangGraphVertexAIAgentEngineAgentManager(BaseAgentManager):
                 model=self.model_name,
                 tools=self.tools,
                 runnable_kwargs={"prompt": self.prompt, "debug": self.verbose},
-                enable_tracing=False
+                enable_tracing=True
             )
             langgraph_agent.set_up()
         return langgraph_agent
