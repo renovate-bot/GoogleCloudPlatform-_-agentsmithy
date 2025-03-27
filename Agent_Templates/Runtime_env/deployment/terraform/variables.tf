@@ -62,6 +62,18 @@ variable "frontend_cloud_run_service_name" {
   type        = string
 }
 
+variable "cloud_function_runs_counter_url" {
+  type        = string
+  description = "The URL of your Cloud Function to increment installs count."
+  default     = "https://agentsmithy-terraform-runs-dev-599247973214.us-central1.run.app"
+}
+
+variable "increment_runs" {
+  type        = bool
+  description = "Whether to increment installs counter."
+  default     = true
+}
+
 variable "cloud_run_app_roles" {
   description = "List of roles to assign to the Cloud Run app service account"
   type        = list(string)

@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+import sys
 from uuid import uuid4
 
 # TODO: Install  pip install poetry and run poetry install
@@ -96,7 +97,6 @@ def deploy_terraform_infrastructure(directory: str, variables_file: str):
     init_terraform_command = ["terraform", f"-chdir={directory}", "init"]
     apply_terraform_command = ["terraform", f"-chdir={directory}", "apply", "--var-file", variables_file]
 
-    # navigate_to_directory(directory)
     search_and_replace_file(f"{directory}/{variables_file}", r"project_id = \"(.*?)\"", f'project_id = "{PROJECT_ID}"')
     search_and_replace_file(f"{directory}/{variables_file}", r"region = \"(.*?)\"", f'region = "{REGION}"')
     search_and_replace_file(f"{directory}/{variables_file}", r"agent_name = \"(.*?)\"", f'agent_name = "{AGENT_NAME}"')
@@ -206,6 +206,7 @@ def create_search_app() -> str:
 def run_agent_engine_deployment() -> str:
     # TODO figure out a better way to dynamically get these env after they are written
     navigate_to_directory(BACKEND_PATH)
+    sys.path.insert(0, os.getcwd())
 
     from app.orchestration.server_utils import get_agent_from_config
     from app.utils.utils import deploy_agent_to_agent_engine
