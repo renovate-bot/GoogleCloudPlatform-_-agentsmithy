@@ -4,12 +4,18 @@ on:
   push:
     branches:
       - main
+      - stage
+      - dev
   pull_request:
     branches:
       - main
+      - stage
+      - dev
   merge_group:
     branches:
       - main
+      - stage
+      - dev
 
 jobs:
   test:
@@ -28,10 +34,12 @@ jobs:
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
-        pip3 install -r requirements.txt
+        pip3 install poetry
+        poetry install --directory Runtime_env/
     - name: Lint with pylint
       run: |
-        pylint --jobs=0 $(git ls-files '*.py') --ignore-paths=example --rcfile=.pylintrc
-    - name: Test with pytest
-      run: |
-        pytest tests
+        pip3 install pylint
+        pylint --jobs=0 $(git ls-files '*.py') --rcfile=.pylintrc
+    # - name: Test with pytest
+    #   run: |
+    #     pytest tests

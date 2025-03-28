@@ -11,88 +11,62 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# pylint: disable=C0301, R1714, R0917, W0719, W0718, W0621, W1510
-"""Builds and deploys a custom agent based on the user configuration
-
-The account running this script should have the following recommended roles:
-- roles/serviceusage.serviceUsageAdmin
-- roles/resourcemanager.projectIamAdmin
-- roles/iam.serviceAccountAdmin
-- roles/iam.serviceAccountUser
-- roles/storage.admin
-- roles/artifactregistry.admin
-- roles/run.admin
-- roles/cloudbuild.builds.editor
-"""
+# pylint: disable=C0301, R1714, R0917, W0719, W0718, W0621, W1510, C0103
+"""Clones the repo, installs the required packages, and builds
+and deploys a custom agent based on the user configuration"""
 import os
 import re
 import subprocess
 import sys
 from uuid import uuid4
 
-# TODO: Install  pip install poetry and run poetry install
-from google.cloud import discoveryengine
-from google.api_core.client_options import ClientOptions
-import vertexai
-import yaml
+# Deferred Imports (will be imported once the packages are installed)
+discoveryengine = None
+ClientOptions = None
+vertexai = None
 
+# Note: The account running this script must have Cloud Run Admin (among other things)
+# Note: Recommend running this script from inside a venv
 
-
-def read_yaml_file(filepath: str) -> dict:
-    """Reads a yaml and returns file contents as a dict. Defaults to utf-8 encoding.
-
-    Args:
-        filepath (str): Path to the yaml.
-
-    Returns:
-        dict: Contents of the yaml.
-
-    Raises:
-        Exception: If an error is encountered reading the file.
-    """
-    try:
-        with open(filepath, "r", encoding="utf-8") as file:
-            file_dict = yaml.safe_load(file)
-        file.close()
-    except yaml.YAMLError as err:
-        raise yaml.YAMLError(f"Error reading file. {err}") from err
-    return file_dict
-
-
+# These vars must be set
 ENV_TAG = "dev"
 DEPLOY_TO_AGENT_ENGINE = False
 
+# Grab vars previously set by user
+# PROJECT_ID = ""
+# REGION = "" # default to us-central
+# AGENT_FOUNDATION_MODEL = ""
+# AGENT_INDUSTRY_TYPE = ""
+# AGENT_ORCHESTRATION_FRAMEWORK = ""
+# AGENT_NAME = ""
+# AGENT_DESCRIPTION = ""
+# DATA_STORE_LOCATION = "" # us
+
+PROJECT_ID = "next-2024-industry-demos"
+REGION = "us-central1"
+AGENT_FOUNDATION_MODEL = "gemini-2.0-flash"
+AGENT_INDUSTRY_TYPE = "finance"
+AGENT_ORCHESTRATION_FRAMEWORK = "langgraph_prebuilt_agent" # "langgraph_vertex_ai_agent_engine_agent"
+AGENT_NAME = "agentsmithy-starter-agent"
+AGENT_DESCRIPTION = "This is a test agent"
+DATA_STORE_LOCATION = "us"
+
+# GitHub Constants.
+REPOSITORY_NAME = "AgentSmithy"
+# TODO: Set branch to release
+REPOSITORY_BRANCH = "init_script"
+REPOSITORY_URL = "git@github.com:srastatter/AgentSmithy.git"
+
 # Cloud Run services config.
 BACKEND_PATH = "Runtime_env"
-BACKEND_CONFIG_FILE = f"{BACKEND_PATH}/deployment/config/{ENV_TAG}.yaml"
-BACKEND_BUILD_FILE = f"{BACKEND_PATH}/deployment/cd/{ENV_TAG}.yaml"
+BACKEND_CONFIG_FILE = f"{os.path.dirname(os.path.abspath(__file__))}/{REPOSITORY_NAME}/{BACKEND_PATH}/deployment/config/{ENV_TAG}.yaml"
+BACKEND_BUILD_FILE = f"{os.path.dirname(os.path.abspath(__file__))}/{REPOSITORY_NAME}/{BACKEND_PATH}/deployment/cd/{ENV_TAG}.yaml"
 FRONTEND_PATH = "ChatbotUI"
-FRONTEND_CONFIG_FILE = f"{FRONTEND_PATH}/src/environments/environment.ts"
-FRONTEND_BUILD_FILE = f"{FRONTEND_PATH}/deployment/cd/{ENV_TAG}.yaml"
-
-backend_yaml_config = read_yaml_file(BACKEND_CONFIG_FILE)
-
-# Check that keys exist
-required_keys = [
-    "PROJECT_ID", "VERTEX_AI_LOCATION", "AGENT_FOUNDATION_MODEL",
-    "AGENT_INDUSTRY_TYPE", "AGENT_ORCHESTRATION_FRAMEWORK", "USER_AGENT",
-    "AGENT_DESCRIPTION", "AGENT_BUILDER_LOCATION"
-]
-if not all(key in backend_yaml_config for key in required_keys):
-    raise KeyError(f"Missing Required keys in {BACKEND_CONFIG_FILE}. Required Keys: {required_keys}")
-
-# Grab env vars previously set by user
-PROJECT_ID = backend_yaml_config["PROJECT_ID"]
-REGION = backend_yaml_config["VERTEX_AI_LOCATION"]
-AGENT_FOUNDATION_MODEL = backend_yaml_config["AGENT_FOUNDATION_MODEL"]
-AGENT_INDUSTRY_TYPE = backend_yaml_config["AGENT_INDUSTRY_TYPE"]
-AGENT_ORCHESTRATION_FRAMEWORK = backend_yaml_config["AGENT_ORCHESTRATION_FRAMEWORK"]
-AGENT_NAME = backend_yaml_config["USER_AGENT"]
-AGENT_DESCRIPTION = backend_yaml_config["AGENT_DESCRIPTION"]
-DATA_STORE_LOCATION = backend_yaml_config["AGENT_BUILDER_LOCATION"]
+FRONTEND_CONFIG_FILE = f"{os.path.dirname(os.path.abspath(__file__))}/{REPOSITORY_NAME}/{FRONTEND_PATH}/src/environments/environment.ts"
+FRONTEND_BUILD_FILE = f"{os.path.dirname(os.path.abspath(__file__))}/{REPOSITORY_NAME}/{FRONTEND_PATH}/deployment/cd/{ENV_TAG}.yaml"
 
 # Terraform Constants.
-TERRAFORM_DIRECTORY = f"{BACKEND_PATH}/deployment/terraform"
+TERRAFORM_DIRECTORY = f"{os.path.dirname(os.path.abspath(__file__))}/{REPOSITORY_NAME}/{BACKEND_PATH}/deployment/terraform"
 TERRAFORM_VAR_FILE = "vars/env.tfvars"
 
 # GCP resources constants.
@@ -112,11 +86,41 @@ SEARCH_APP_ENGINE_ID = f"agent_smithy_search_engine_{uuid4()}"
 GCS_STAGING_BUCKET = f"gs://{PROJECT_ID.lower().replace(' ', '-')}-agents-staging"
 
 
-vertexai.init(
-    project=PROJECT_ID,
-    location=REGION,
-    staging_bucket=GCS_STAGING_BUCKET
-)
+def clone(repo_url: str, branch: str):
+    remove_command = ["rm", "-rf", REPOSITORY_NAME]
+    subprocess.run(remove_command, check=True)
+
+    clone_command = ["git", "clone", "-b", branch, repo_url]
+    subprocess.run(clone_command, check=True)
+
+def install_poetry_dependencies(pyproject_path_rel: str):
+    """
+    Installs dependencies from a pyproject.toml file using Poetry.
+
+    Args:
+        pyproject_path_rel: The relative path to the directory containing pyproject.toml.
+    """
+    # install poetry
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "poetry"])
+        print("Poetry installed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error installing dependencies: {e}")
+        sys.exit(1)  # Exit script if installation fails
+
+    try:
+        # Get the absolute path to the pyproject.toml directory
+        absolute_path = os.path.abspath(pyproject_path_rel)
+        command = [sys.executable, "-m", "poetry", "install", "--directory", absolute_path]
+        subprocess.check_call(command)
+        print("Poetry dependencies installed successfully.")
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error installing Poetry dependencies: {e}")
+        sys.exit(1)
+    except FileNotFoundError:
+        print("Poetry is not installed. Please install Poetry first.")
+        sys.exit(1)
 
 def deploy_terraform_infrastructure(directory: str, variables_file: str):
     init_terraform_command = ["terraform", f"-chdir={directory}", "init"]
@@ -228,12 +232,11 @@ def create_search_app() -> str:
 
 def run_agent_engine_deployment() -> str:
     # TODO figure out a better way to dynamically get these env after they are written
-    navigate_to_directory(BACKEND_PATH)
+    navigate_to_directory(f"{REPOSITORY_NAME}/{BACKEND_PATH}")
     sys.path.insert(0, os.getcwd())
 
     from app.orchestration.server_utils import get_agent_from_config
     from app.utils.utils import deploy_agent_to_agent_engine
-
 
     agent_manager = get_agent_from_config(
         agent_orchestration_framework=AGENT_ORCHESTRATION_FRAMEWORK,
@@ -261,11 +264,11 @@ def run_agent_engine_deployment() -> str:
 
     try:
         # If AGENT_ENGINE_RESOURCE_ID is set, then the agent will query the remote agent
-        with open(BACKEND_CONFIG_FILE.replace(f"{BACKEND_PATH}/", ""), "a", encoding="utf-8") as f:
+        with open(BACKEND_CONFIG_FILE.replace(f"{os.path.dirname(os.path.abspath(__file__))}/{REPOSITORY_NAME}/{BACKEND_PATH}/", ""), "a", encoding="utf-8") as f:
             f.write(f"\nAGENT_ENGINE_RESOURCE_ID: {remote_agent.resource_name}\n")
         f.close()
     except FileNotFoundError:
-        print(f"`{BACKEND_CONFIG_FILE.replace(f'{BACKEND_PATH}/', '')}` file not found.")
+        print(f"`{BACKEND_CONFIG_FILE.replace(f'{os.path.dirname(os.path.abspath(__file__))}/{REPOSITORY_NAME}/{BACKEND_PATH}/', '')}` file not found.")
 
     navigate_to_directory(".")
 
@@ -314,10 +317,31 @@ def get_cloud_run_url(region: str, service_name: str) -> str:
         print(f"An unexpected error occurred: {e}")
         return ""
 
-def configure_backend(gcs_bucket: str, datastore_id: str, frontend_url: str, config_file: str):
+def configure_backend(
+        gcs_bucket: str,
+        datastore_id: str,
+        frontend_url: str,
+        config_file: str,
+        project_id: str,
+        region: str,
+        agent_foundation_model: str,
+        agent_industry_type: str,
+        agent_orchestration_framework: str,
+        agent_name: str,
+        agent_description: str,
+        data_store_location: str
+):
     search_and_replace_file(config_file, r"GCS_STAGING_BUCKET:\s(.*?)*\n", f"GCS_STAGING_BUCKET: {gcs_bucket}\n")
     search_and_replace_file(config_file, r"DATA_STORE_ID:\s(.*?)*\n", f"DATA_STORE_ID: {datastore_id}\n")
     search_and_replace_file(config_file, r"FRONTEND_URL:\s(.*?)*\n", f"FRONTEND_URL: {frontend_url}\n")
+    search_and_replace_file(config_file, r"PROJECT_ID:\s(.*?)*\n", f"PROJECT_ID: {project_id}\n")
+    search_and_replace_file(config_file, r"VERTEX_AI_LOCATION:\s(.*?)*\n", f"VERTEX_AI_LOCATION: {region}\n")
+    search_and_replace_file(config_file, r"AGENT_BUILDER_LOCATION:\s(.*?)*\n", f"AGENT_BUILDER_LOCATION: {data_store_location}\n")
+    search_and_replace_file(config_file, r"AGENT_INDUSTRY_TYPE:\s(.*?)*\n", f"AGENT_INDUSTRY_TYPE: {agent_industry_type}\n")
+    search_and_replace_file(config_file, r"AGENT_ORCHESTRATION_FRAMEWORK:\s(.*?)*\n", f"AGENT_ORCHESTRATION_FRAMEWORK: {agent_orchestration_framework}\n")
+    search_and_replace_file(config_file, r"AGENT_FOUNDATION_MODEL:\s(.*?)*\n", f"AGENT_FOUNDATION_MODEL: {agent_foundation_model}\n")
+    search_and_replace_file(config_file, r"USER_AGENT:\s(.*?)*\n", f"USER_AGENT: {agent_name}\n")
+    search_and_replace_file(config_file, r"AGENT_DESCRIPTION:\s(.*?)*\n", f"AGENT_DESCRIPTION: {agent_description}\n")
 
 def configure_frontend(agent_name: str, backend_url: str, env_tag: str, config_file: str):
     search_and_replace_file(config_file, r"const env: string = \"(.*?)\"", f'const env: string = "{env_tag}"')
@@ -341,7 +365,7 @@ def build_and_deploy_cloud_run(
         build_file_location,
         "--substitutions",
         f"_PROJECT_ID={project_id},_REGION={region},_CONTAINER_NAME={container_name},_ARTIFACT_REGISTRY_REPO_NAME={artifact_registry_name},_SERVICE_NAME={service_name}",
-        BACKEND_PATH if is_backend else FRONTEND_PATH
+        f"{os.path.dirname(os.path.abspath(__file__))}/{REPOSITORY_NAME}/{BACKEND_PATH}" if is_backend else f"{os.path.dirname(os.path.abspath(__file__))}/{REPOSITORY_NAME}/{FRONTEND_PATH}"
     ]
     subprocess.run(push_command, check=True)
 
@@ -365,8 +389,19 @@ if __name__ == "__main__":
     #    print("Usage: python3 local_deploy.py action (e.g action = (clone, run, redeploy))")
     #    exit(1)
 
-    deploy_terraform_infrastructure(TERRAFORM_DIRECTORY, TERRAFORM_VAR_FILE)
+    clone(REPOSITORY_URL, REPOSITORY_BRANCH)
+    install_poetry_dependencies(f"{REPOSITORY_NAME}/{BACKEND_PATH}")
 
+    from google.cloud import discoveryengine
+    from google.api_core.client_options import ClientOptions
+    import vertexai
+
+    vertexai.init(
+        project=PROJECT_ID,
+        location=REGION,
+        staging_bucket=GCS_STAGING_BUCKET
+    )
+    deploy_terraform_infrastructure(TERRAFORM_DIRECTORY, TERRAFORM_VAR_FILE)
     create_data_store()
     populate_data_store(AGENT_INDUSTRY_TYPE)
     create_search_app()
@@ -377,9 +412,16 @@ if __name__ == "__main__":
         GCS_STAGING_BUCKET,
         DATA_STORE_ID,
         frontend_url,
-        BACKEND_CONFIG_FILE
+        BACKEND_CONFIG_FILE,
+        PROJECT_ID,
+        REGION,
+        AGENT_FOUNDATION_MODEL,
+        AGENT_INDUSTRY_TYPE,
+        AGENT_ORCHESTRATION_FRAMEWORK,
+        AGENT_NAME,
+        AGENT_DESCRIPTION,
+        DATA_STORE_LOCATION,
     )
-
     if DEPLOY_TO_AGENT_ENGINE:
         run_agent_engine_deployment()
 

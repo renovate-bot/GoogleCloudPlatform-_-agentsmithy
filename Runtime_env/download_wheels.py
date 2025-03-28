@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2025 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# pylint: disable=C0301:line-too-long
+"""Test Module for downloading Vertex AI Agent Framework"""
 import subprocess
 import os
 
@@ -18,6 +20,7 @@ WHEEL_URL = "gs://agent_framework/latest/google_genai_agents-0.0.2.dev20250304+7
 WHEEL_FILE = "google_genai_agents-0.0.2.dev20250204+723246417-py3-none-any.whl"
 
 def download_wheel():
+    """Downloads specified wheel file"""
     if not os.path.exists(WHEEL_FILE):
         try:
             subprocess.check_call(["gsutil", "cp", WHEEL_URL, "."])

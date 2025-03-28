@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2025 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# pylint: disable=C0301, R1714
 """Module that contains various tool definitions."""
 from typing import List
 
-# from ionic_langchain.tool import IonicTool
 from langchain_core.documents import Document
 from langchain_core.tools import StructuredTool
 from langchain_community.tools.pubmed.tool import PubmedQueryRun
@@ -32,7 +32,6 @@ import vertexai
 from llama_index.core.tools import FunctionTool
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.retrievers.vertexai_search import VertexAISearchRetriever
-# from llama_index.tools.yahoo_finance import YahooFinanceToolSpec
 
 from app.orchestration.config import (
     PROJECT_ID,
@@ -145,18 +144,6 @@ def medical_publications_tool(query: str) -> str:
     pubmed = PubmedQueryRun()
     return pubmed.invoke(query)
 
-# `pip install ionic-langchain``
-
-# def retail_discovery_tool(query: str) -> str:
-#     """Ionic is an e-commerce shopping tool. Use this tool when the user is looking
-#         for a product recommendation or trying to find a specific product.
-
-#         Example question: I'm looking for a new 4k monitor can you find me some options
-#         for less than $1000
-#     """
-#     ionic = IonicTool()
-#     return ionic.tool().invoke(query)
-
 
 def should_continue() -> None:
     """
@@ -164,14 +151,6 @@ def should_continue() -> None:
     """
     return None
 
-# def fallback(query: str) -> str:
-#     """
-#     Only use this tool if you have tried other tools and still do not have enough context to respond to 
-#     the questions of the user.
-#     This tool will attempt to answer the question using Google Gemini.
-#     """
-#     response = gemini_20_chat_llm.stream(query)
-#     return response
 
 def get_tools(
         industry_type: str,
@@ -282,7 +261,6 @@ def get_llamaindex_tools(industry_type: str = None) -> list:
             FunctionTool.from_defaults(fn=google_finance_tool)
         ])
 
-    # TODO: There is a bug in here that is not obvious
     if DATA_STORE_ID != "unset":
         tools_list.append(FunctionTool.from_defaults(fn=llamaindex_query_engine_tool))
 

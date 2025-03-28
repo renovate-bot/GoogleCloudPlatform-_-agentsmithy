@@ -1,10 +1,18 @@
-# ==============================================================================
-# Copyright 2025 Google LLC. This software is provided as-is, without warranty
-# or representation for any use or purpose. Your use of it is subject to your
-# agreement with Google.
-# ==============================================================================
-"""Module that contains a function for exporting toml package dependencies to
-requirements.txt format"""
+# Copyright 2025 Google LLC. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# pylint: disable=C0301, W0718
+"""Module that contains various utility functions across the runtime env"""
 import os
 
 import toml
@@ -27,7 +35,7 @@ def get_requirements_from_toml(pyproject_file="pyproject.toml"):
               if there's an error reading the file.
     """
     try:
-        with open(pyproject_file, "r", encoding='utf-8') as f:
+        with open(pyproject_file, "r", encoding="utf-8") as f:
             data = toml.load(f)
 
         dependencies = data.get("tool", {}).get("poetry", {}).get("dependencies", {})
@@ -42,7 +50,7 @@ def get_requirements_from_toml(pyproject_file="pyproject.toml"):
                 continue
 
             if isinstance(version_info, str):
-                if '^' in version_info:
+                if "^" in version_info:
                     requirements.append(f"{package}>={version_info.replace('^', '')}")
                 else:
                     requirements.append(f"{package}=={version_info}")
@@ -53,7 +61,7 @@ def get_requirements_from_toml(pyproject_file="pyproject.toml"):
 
                 if extras:
                     extras_str = ",".join(extras)
-                    if '^' in version:
+                    if "^" in version:
                         requirements.append(f"{package}[{extras_str}]>={version.replace('^', '')}")
                     else:
                         requirements.append(f"{package}[{extras_str}]=={version}")
@@ -90,7 +98,7 @@ def read_yaml_file(filepath: str) -> dict:
             file_dict = yaml.safe_load(file)
         file.close()
     except yaml.YAMLError as err:
-        raise yaml.YAMLError(f"Error reading file. {err}'") from err
+        raise yaml.YAMLError(f"Error reading file. {err}") from err
     return file_dict
 
 
@@ -124,8 +132,8 @@ def load_env_from_yaml(filepath: str):
             # Convert value to string for setting in os.environ
             os.environ[key] = str(value)
 
-    except FileNotFoundError:
-        raise FileNotFoundError(f"YAML file not found: {filepath}")
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"YAML file not found: {filepath}") from e
 
 
 def deploy_agent_to_agent_engine(
