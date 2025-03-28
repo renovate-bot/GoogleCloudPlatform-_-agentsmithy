@@ -38,6 +38,7 @@ jobs:
         poetry install --directory Runtime_env/
     - name: Lint with pylint
       run: |
+        pip3 install pylint
         pylint --jobs=0 $(git ls-files '*.py') --rcfile=.pylintrc
     # - name: Test with pytest
     #   run: |
