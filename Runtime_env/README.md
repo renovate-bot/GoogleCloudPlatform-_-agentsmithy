@@ -171,24 +171,11 @@ See [deployment/README.md](deployment/README.md) for instructions.
 
 For detailed deployment instructions, refer to [deployment/README.md](deployment/README.md).
 
-## Contributing
 
-Contributions are welcome! See the [Contributing Guide](CONTRIBUTING.md).
 
-## Feedback
 
-We value your input! Your feedback helps us improve this starter pack and make it more useful for the community.
 
-### Getting Help
+## Local Testing uring cURL
 
-If you encounter any issues or have specific suggestions, please first consider [raising an issue](https://github.com/GoogleCloudPlatform/generative-ai/issues) on our GitHub repository.
+## Tools
 
-### Share Your Experience
-
-For other types of feedback, or if you'd like to share a positive experience or success story using this starter pack, we'd love to hear from you! You can reach out to us at <a href="mailto:e2e-gen-ai-app-starter-pack@google.com">e2e-gen-ai-app-starter-pack@google.com</a>.
-
-Thank you for your contributions!
-
-## Disclaimer
-
-This repository is for demonstrative purposes only and is not an officially supported Google product.

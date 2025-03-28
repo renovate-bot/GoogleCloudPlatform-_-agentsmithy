@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# gcloud builds submit --config deployment/cd/dev.yaml --substitutions _PROJECT_ID=<project_id> _ARTIFACT_REGISTRY_REPO_NAME=<af_name> .
+# gcloud builds submit --config deployment/cd/dev.yaml --substitutions _PROJECT_ID=<project_id>,_ARTIFACT_REGISTRY_REPO_NAME=<af_name> .
 
 steps:
   # Build and Push

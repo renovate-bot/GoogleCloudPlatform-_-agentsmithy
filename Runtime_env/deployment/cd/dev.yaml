@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# gcloud builds submit --config deployment/cd/dev.yaml --substitutions _PROJECT_ID=<project_id> _ARTIFACT_REGISTRY_REPO_NAME=<af_name> .
+# gcloud builds submit --config deployment/cd/dev.yaml --substitutions _PROJECT_ID=<project_id>,_ARTIFACT_REGISTRY_REPO_NAME=<af_name> .
 
 steps:
   # Build and Push
@@ -20,14 +20,12 @@ steps:
     args:
       - 'build'
       - '-t'
-      # - 'us-central1-docker.pkg.dev/$_PROJECT_ID/$_ARTIFACT_REGISTRY_REPO_NAME/agent_runtime${_SUFFIX}:latest'
       - '$_REGION-docker.pkg.dev/$_PROJECT_ID/$_ARTIFACT_REGISTRY_REPO_NAME/$_CONTAINER_NAME:latest'
       - '.'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      # - 'us-central1-docker.pkg.dev/$_PROJECT_ID/$_ARTIFACT_REGISTRY_REPO_NAME/agent_runtime${_SUFFIX}:latest'
       - '$_REGION-docker.pkg.dev/$_PROJECT_ID/$_ARTIFACT_REGISTRY_REPO_NAME/$_CONTAINER_NAME:latest'
 
   # Deploy

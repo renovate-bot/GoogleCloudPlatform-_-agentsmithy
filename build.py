@@ -38,10 +38,10 @@ ENV_TAG = "dev"
 DEPLOY_TO_AGENT_ENGINE = False
 
 # Cloud Run services config.
-BACKEND_PATH = "Agent_Templates/Runtime_env"
+BACKEND_PATH = "Runtime_env"
 BACKEND_CONFIG_FILE = f"{BACKEND_PATH}/deployment/config/{ENV_TAG}.yaml"
 BACKEND_BUILD_FILE = f"{BACKEND_PATH}/deployment/cd/{ENV_TAG}.yaml"
-FRONTEND_PATH = "Agent_Templates/ChatbotUI"
+FRONTEND_PATH = "ChatbotUI"
 FRONTEND_CONFIG_FILE = f"{FRONTEND_PATH}/src/environments/environment.ts"
 FRONTEND_BUILD_FILE = f"{FRONTEND_PATH}/deployment/cd/{ENV_TAG}.yaml"
 

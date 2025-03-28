@@ -11,30 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-steps:
-  - name: "python:3.10"
-    id: install-dependencies
-    entrypoint: /bin/bash
-    args:
-      - "-c"
-      - |
-        pip install poetry==1.8.3 --user && python -m poetry install
 
-  - name: "python:3.10"
-    id: unit-tests
-    entrypoint: /bin/bash
-    args:
-      - "-c"
-      - |
-        python -m poetry run pytest tests/unit
+# test:
+# 	poetry run pytest tests/unit && poetry run pytest tests/integration
 
-  # Run integration tests
-  - name: "python:3.10"
-    id: integration-tests
-    entrypoint: /bin/bash
-    args:
-      - "-c"
-      - |
-        python -m poetry run pytest tests/integration
-options:
-  logging: CLOUD_LOGGING_ONLY
+backend:
+	poetry install
+	poetry run uvicorn app.server:app --host 0.0.0.0 --port 8000 --reload
+
+# load_test:
+# 	poetry run locust -f tests/load_test/load_test.py -H $RUN_SERVICE_URL --headless -t 30s -u 60 -r 2 --csv=tests/load_test/.results/results --html=tests/load_test/.results/report.html
+
+lint:
+	poetry run codespell
+	poetry run flake8 .
+	poetry run pylint .
+	poetry run mypy .
+	poetry run black .
