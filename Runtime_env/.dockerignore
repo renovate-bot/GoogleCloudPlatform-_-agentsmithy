@@ -1,0 +1,15 @@
+**/.terraform/
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/terraform/
+**/*.tfvars
+**/*.tfvars
+.DS_Store
+**/*.pyc
+**/*.pyo
+**/*.mo
+.gitignore
+.git/
+**/__pycache__/
+Dockerfile
+db.sqlite3

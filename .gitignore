@@ -144,3 +144,7 @@ cython_debug/
 
 # Local Configs
 config.yaml
+
+# Terraform cache
+.terraform/
+.terraform.lock.hcl
