@@ -81,7 +81,7 @@ Below is a list of the options that AgentSmithy currently supports:
    poetry install --directory Runtime_env/
    ```
 
-   - Set the required variables in [Runtime_env/deployment/config/dev.yaml](Runtime_env/deployment/config/dev.yaml). Check [this section](#environment_variables) for a list of supported values. Example configuration shown below:
+   - Set the required variables in [Runtime_env/deployment/config/dev.yaml](Runtime_env/deployment/config/dev.yaml). Check [this section](#environment-variables) for a list of supported values. Example configuration shown below:
 
    ```yaml
    PROJECT_ID: next-2025-industry-demos
@@ -111,7 +111,7 @@ This will deploy Cloud Run services for the frontend and backend according to yo
 ## Authentication
 These Cloud Run services will be deployed by default with the configuration `Allow unauthenticated invocations`. Update the code templates to incorporate your own custom authentication. The easiest options include deploying [Identity-Aware Proxy (IAP)](https://cloud.google.com/iap/docs/enabling-cloud-run) or using [Firebase Authentication](https://cloud.google.com/run/docs/authenticating/end-users) to manage user credentials and authentication flow. 
 
-# environment_variables:
+# Environment Variables:
 AgentSmithy uses env vars defined in [Runtime_env/deployment/config/dev.yaml](Runtime_env/deployment/config/dev.yaml) to determine the specific configuration of the Agents. Supported values for these env vars are listed below:
 
 **PROJECT_ID:**
@@ -180,7 +180,7 @@ Tools are external functions, services, or resources that an agent can use to in
 Based on your selection of finance, your agent has been configured with the following use case and tools:
 
 
-**Industry: Finance**
+### **Industry: Finance**
 
 Use Case: **AI-Powered Investment Research Analyst for Alphabet:** Provides financial insights on Alphabet by analyzing its financial reports, strategic initiatives, and management perspectives from its historical investor documents. (Disclaimer: This Agent is for demonstration purposes only)
 
@@ -197,7 +197,7 @@ Sample Prompts:
 3. How does each Alphabet business segment contribute to overall revenue and profit?
 
 
-**Industry: Healthcare**
+### **Industry: Healthcare**
 
 Use Case: **Symptom Checker and Triage Assistant:** Analyzes general medical symptoms and acts as a virtual assistant to help triage patients to the appropriate level of care during consultations. (Disclaimer: This Agent is for demonstration purposes only and is NOT a substitute for professional medical advice)
 
@@ -215,7 +215,7 @@ Sample Prompts:
 2. What red flag symptoms would indicate that my sore throat is something more serious than a cold?
 3. Based on past consultations, are there specific symptoms that were particularly helpful in narrowing down a differential diagnosis?
 
-**Industry: Retail**
+### **Industry: Retail**
 
 Use Case: **Google Product Discovery Assistant:** Answers product-specific questions on Google Products available on the Google Store (Disclaimer: This Agent is for demonstration purposes only)
 

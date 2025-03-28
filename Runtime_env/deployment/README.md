@@ -167,3 +167,13 @@ After completing these steps, your infrastructure will be set up and ready for d
    ```
 
    - Type 'yes' when prompted to confirm
+
+4. There is an optional counter that sents a request to our AgentSmithy server which increments when this terraform script is run. This allows us to track number of runs. The post request is empty and no information is sent over to this server other than an empty request. If you wish to opt-out of this counter, you can do so by setting the following [terraform/variables.tf](terraform/variables.tf) block to false:
+
+```terraform
+variable "increment_runs" {
+  type        = bool
+  description = "Whether to increment installs counter."
+  default     = false
+}
+```
