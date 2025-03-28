@@ -33,23 +33,23 @@ ENV_TAG = "dev"
 DEPLOY_TO_AGENT_ENGINE = False
 
 # Grab vars previously set by user
-# PROJECT_ID = ""
-# REGION = "" # default to us-central
-# AGENT_FOUNDATION_MODEL = ""
-# AGENT_INDUSTRY_TYPE = ""
-# AGENT_ORCHESTRATION_FRAMEWORK = ""
-# AGENT_NAME = ""
-# AGENT_DESCRIPTION = ""
-# DATA_STORE_LOCATION = "" # us
+PROJECT_ID = ""
+REGION = "" # default to us-central
+AGENT_FOUNDATION_MODEL = ""
+AGENT_INDUSTRY_TYPE = ""
+AGENT_ORCHESTRATION_FRAMEWORK = ""
+AGENT_NAME = ""
+AGENT_DESCRIPTION = ""
+DATA_STORE_LOCATION = "" # us
 
-PROJECT_ID = "next-2024-industry-demos"
-REGION = "us-central1"
-AGENT_FOUNDATION_MODEL = "gemini-2.0-flash"
-AGENT_INDUSTRY_TYPE = "finance"
-AGENT_ORCHESTRATION_FRAMEWORK = "langgraph_prebuilt_agent" # "langgraph_vertex_ai_agent_engine_agent"
-AGENT_NAME = "agentsmithy-starter-agent"
-AGENT_DESCRIPTION = "This is a test agent"
-DATA_STORE_LOCATION = "us"
+# PROJECT_ID = "next-2024-industry-demos"
+# REGION = "us-central1"
+# AGENT_FOUNDATION_MODEL = "gemini-2.0-flash"
+# AGENT_INDUSTRY_TYPE = "finance"
+# AGENT_ORCHESTRATION_FRAMEWORK = "langgraph_prebuilt_agent" # "langgraph_vertex_ai_agent_engine_agent"
+# AGENT_NAME = "agentsmithy-starter-agent"
+# AGENT_DESCRIPTION = "This is a test agent"
+# DATA_STORE_LOCATION = "us"
 
 # GitHub Constants.
 REPOSITORY_NAME = "AgentSmithy"
