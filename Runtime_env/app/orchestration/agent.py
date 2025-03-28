@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2025 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 # limitations under the License.
 # pylint: disable=C0301, W0107, W0107, W0622, R0917
 """Module used to define and interact with agent orchestrators."""
-
 from abc import ABC, abstractmethod
 from typing import AsyncGenerator, Generator, Dict, Any, Optional
 import uuid
