@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# pylint: disable=C0301, W0107, W0107, W0622, R0917
 """Module used to define and interact with agent orchestrators."""
 
 from abc import ABC, abstractmethod
-import json
 from typing import AsyncGenerator, Generator, Dict, Any, Optional
 import uuid
 
@@ -23,7 +23,7 @@ from langchain.agents import (
     AgentExecutor,
     create_react_agent as langchain_create_react_agent
 )
-from langchain_core.messages import AIMessageChunk, ToolMessage, AIMessage
+from langchain_core.messages import  AIMessage
 from langchain_google_vertexai import ChatVertexAI
 from langchain_google_vertexai.model_garden import ChatAnthropicVertex
 from langgraph.prebuilt import create_react_agent as langgraph_create_react_agent
@@ -398,7 +398,7 @@ class LangChainVertexAIAgentEngineAgentManager(BaseAgentManager):
         return_steps: Optional[bool] = False,
         verbose: Optional[bool] = True
     ):
-         super().__init__(
+        super().__init__(
             prompt=prompt,
             industry_type=industry_type,
             location=location,
@@ -428,8 +428,8 @@ class LangChainVertexAIAgentEngineAgentManager(BaseAgentManager):
                 model=self.model_name,
                 tools=self.tools,
                 agent_executor_kwargs={
-                    'return_intermediate_steps': self.return_steps,
-                    'verbose': self.verbose
+                    "return_intermediate_steps": self.return_steps,
+                    "verbose": self.verbose
                 },
                 enable_tracing=True
             )
@@ -484,7 +484,7 @@ class LangGraphVertexAIAgentEngineAgentManager(BaseAgentManager):
         return_steps: Optional[bool] = False,
         verbose: Optional[bool] = True
     ):
-         super().__init__(
+        super().__init__(
             prompt=prompt,
             industry_type=industry_type,
             location=location,

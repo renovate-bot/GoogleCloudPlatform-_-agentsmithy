@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+# pylint: disable=C0301
+"""Module that defines a custom RAG engine using Vertex AI Search"""
 import os
 from unittest.mock import MagicMock
 
 from langchain_google_community import VertexAISearchRetriever
 from langchain_google_community.vertex_rank import VertexAIRank
-from langchain_google_vertexai import VertexAIEmbeddings
 
 
 def get_retriever(

@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# pylint: disable=W0718, C0411
+# pylint: disable=W0718, W0621, C0411, C0301
 # ruff: noqa: I001
+"""Fast API Server for running an AI Agent"""
 
 import json
 import logging

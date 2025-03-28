@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+# pylint: disable=C0301, R1710
+"""Defines custom input types using pydantic"""
 from typing import Annotated, Any, List, Literal, Optional, Union
 
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage

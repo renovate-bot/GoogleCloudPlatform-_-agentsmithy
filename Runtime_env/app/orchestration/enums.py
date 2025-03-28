@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# pylint: disable=C0301
+"""Defines list of supported orchestration frameworks and industries"""
 from enum import Enum
 
 class OrchestrationFramework(Enum):
