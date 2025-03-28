@@ -87,7 +87,7 @@ curl -X POST \
 
 ## Server Details
 
-See [app/README.md](deployment/README.md) for more details related to the setup of the Agent and the backend server.
+See [app/README.md](app/README.md) for more details related to the setup of the Agent and the backend server.
 
 
 ## Deployment

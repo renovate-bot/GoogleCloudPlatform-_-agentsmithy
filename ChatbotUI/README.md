@@ -29,7 +29,7 @@ Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To u
 ## Deploying to Cloud Run using Cloud Build
 **Run Cloud Build Job**
 
-   - The file [`deployment/cd/dev.yaml`](cd/dev.yaml) contains a Cloud Build Manifest that will build and push your agent frontend container and deploy it to Cloud Run. There are a couple of substitution variables to be set when using this file. 
+   - The file [`deployment/cd/dev.yaml`](deployment/cd/dev.yaml) contains a Cloud Build Manifest that will build and push your agent frontend container and deploy it to Cloud Run. There are a couple of substitution variables to be set when using this file. 
 
    | Variable                               | Description                                                                           | Required |
    | ---------------------------------------| ------------------------------------------------------------------------------------- | :------: |
