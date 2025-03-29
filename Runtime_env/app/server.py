@@ -96,22 +96,8 @@ async def stream_event_response(input_chat: InnerInputChat):
         }
     )
 
-    # yield json.dumps(
-    #     Event(event="metadata", data={"run_id": str(run_id)}),
-    #     default=default_serialization,
-    # ) + "\n"
-
-    # for data in agent_manager.astream(input_dict):
-    #     yield json.dumps(
-    #         # Event(event="on_chat_model_stream", data={"chunk": data}),
-    #         # data,
-    #         default=default_serialization
-    #     ) + "\n"
-
     async for data in agent_manager.astream(input_dict):
         yield json.dumps(data, default=default_serialization) + "\n"
-
-    # yield json.dumps(EndEvent(), default=default_serialization) + "\n"
 
 
 # Routes

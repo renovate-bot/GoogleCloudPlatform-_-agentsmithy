@@ -455,9 +455,7 @@ class LangChainVertexAIAgentEngineAgentManager(BaseAgentManager):
         # Convert the messages into a string
         content = "\n".join(f"[{msg['type']}]: {msg['content']}" for msg in input["messages"])
         try:
-            for chunk in self.agent_executor.stream_query(
-                input={"input": content}
-            ):
+            for chunk in self.agent_executor.stream_query(input=content):
                 chunk["messages"] = [{**msg, "kwargs": {**msg["kwargs"], "id": input["run_id"]}} for msg in chunk["messages"]]
                 yield {"agent": chunk}
         except Exception as e:
