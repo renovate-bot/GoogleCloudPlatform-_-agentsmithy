@@ -1,0 +1,18 @@
+# Set these env vars manually
+PROJECT_ID: next-2024-industry-demos
+VERTEX_AI_LOCATION: us-central1
+AGENT_BUILDER_LOCATION: us
+AGENT_INDUSTRY_TYPE: finance
+AGENT_ORCHESTRATION_FRAMEWORK: langgraph_prebuilt_agent
+AGENT_FOUNDATION_MODEL: gemini-2.0-flash
+USER_AGENT: agentsmithy-starter-agent
+AGENT_DESCRIPTION: "This is a test agent"
+
+
+# These env vars will be set for you by build.py
+FRONTEND_URL: 
+GCS_STAGING_BUCKET: 
+DATA_STORE_ID: 
+
+# Backend Server Details (Only include if you are using agent engine). Example shown below
+# AGENT_ENGINE_RESOURCE_ID: projects/599247973214/locations/us-central1/reasoningEngines/5008011581729013760
