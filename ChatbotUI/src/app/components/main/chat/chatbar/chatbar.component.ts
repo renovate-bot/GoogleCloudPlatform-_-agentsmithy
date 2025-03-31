@@ -15,14 +15,13 @@ import { Component, EventEmitter, Output, OnDestroy } from '@angular/core';
 import { ChatService } from 'src/app/services/chat.service';
 import { UserService } from 'src/app/services/user/user.service';
 import { BroadcastService } from 'src/app/services/broadcast.service';
-import { last, Observable, ReplaySubject, single, Subject } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
-import { Chat, ChatEvent} from 'src/app/models/chat.model';
+import { Chat, } from 'src/app/models/chat.model';
 import { animate, sequence, state, style, transition, trigger } from '@angular/animations';
 import { SpeechToTextService } from 'src/app/services/speech-to-text';
 import { Message, SuggestionData } from 'src/app/models/messegeType.model';
 import { HttpDownloadProgressEvent, HttpEvent, HttpEventType } from '@angular/common/http';
-import { parse } from 'uuid';
 
 @Component({
   selector: 'app-chatbar',
@@ -172,7 +171,7 @@ export class ChatbarComponent implements OnDestroy {
       this.botStartTime = new Date().getTime()
       this.initialQuestion = this.conversation[0].body;
       this.pushQuestion(this.initialQuestion);
-      this.chatService.postChat(this.conversation[0].body).subscribe({
+      this.chatService.postChat([...this.conversation]).subscribe({
         next: (event: HttpEvent<string>) => {
           if (event.type === HttpEventType.DownloadProgress) {
             this.handleBotResponse(
@@ -231,7 +230,7 @@ export class ChatbarComponent implements OnDestroy {
     let singleMessage: Message = {
       body: this.chatQuery,
       type: 'user',
-      shareable: false,
+      shareable: true,
     }
 
     this.conversation.unshift(singleMessage);
@@ -239,7 +238,8 @@ export class ChatbarComponent implements OnDestroy {
     this.showLoader = true;
     this.setTimeoutForLoaderText();
     this.setCyclicBackgroundImages();
-    this.chatService.postChat(singleMessage.body).subscribe({
+    console.log(this.conversation);
+    this.chatService.postChat([...this.conversation]).subscribe({
       next: (event: HttpEvent<string>) => {
         if (event.type === HttpEventType.DownloadProgress) {
           this.handleBotResponse(

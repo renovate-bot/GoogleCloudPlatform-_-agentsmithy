@@ -17,6 +17,8 @@ import { Observable, Subject, tap } from 'rxjs';
 import { CreateChatRequest } from '../models/chat.model';
 import { environment } from 'src/environments/environment';
 import { SessionService } from './user/session.service';
+import { Message as ChatMessage } from '../models/messegeType.model';
+import { Message } from '../models/chat.model';
 
 // include "/" or ":" in the environment.ts file
 const chatsUrl = `${environment.backendURL}streamQuery`;
@@ -29,23 +31,27 @@ export class ChatService {
 
   constructor(private http: HttpClient, private sessionService: SessionService) {}
 
-  postChat(query: string): Observable<HttpEvent<string>> {
+  postChat(conversation: ChatMessage[]): Observable<HttpEvent<string>> {
     if (!this.sessionService.getSession()) {
       this.sessionService.createSession();
     }
 
     const headers = new HttpHeaders({'Content-Type': 'application/json' });
 
-    query = query.replace(/\s+/g, " ").trim();
+    let messages: Message[] = []
+
+    conversation.reverse().filter(message => message.type !== 'bot' ? true : message.botAnswer ).forEach(message => {
+      messages.push(
+        {
+          content: message.type === 'bot' ? message.botAnswer!.replace(/\s+/g, " ").trim() : message.body.replace(/\s+/g, " ").trim(),
+          type: message.type === 'bot' ? 'ai' : 'human',
+        }
+      )
+    })
     const body: CreateChatRequest = {
       input: {
         input: {
-          messages: [
-            {
-              content: query,
-              type: "human",
-            }
-          ],
+          messages: messages,
           session_id: this.sessionService.getSession()!,
         }
       }
