@@ -238,7 +238,6 @@ export class ChatbarComponent implements OnDestroy {
     this.showLoader = true;
     this.setTimeoutForLoaderText();
     this.setCyclicBackgroundImages();
-    console.log(this.conversation);
     this.chatService.postChat([...this.conversation]).subscribe({
       next: (event: HttpEvent<string>) => {
         if (event.type === HttpEventType.DownloadProgress) {
