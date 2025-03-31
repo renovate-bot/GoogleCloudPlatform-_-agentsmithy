@@ -52,10 +52,9 @@ DATA_STORE_LOCATION = "" # us
 # DATA_STORE_LOCATION = "us"
 
 # GitHub Constants.
-REPOSITORY_NAME = "AgentSmithy"
-# TODO: Set branch to release
-REPOSITORY_BRANCH = "init_script"
-REPOSITORY_URL = "git@github.com:srastatter/AgentSmithy.git"
+REPOSITORY_NAME = "agentsmithy"
+REPOSITORY_BRANCH = "main"
+REPOSITORY_URL = "git@github.com:GoogleCloudPlatform/agentsmithy.git"
 
 # Cloud Run services config.
 BACKEND_PATH = "Runtime_env"
@@ -390,6 +389,7 @@ if __name__ == "__main__":
     #    exit(1)
 
     clone(REPOSITORY_URL, REPOSITORY_BRANCH)
+    stop
     install_poetry_dependencies(f"{REPOSITORY_NAME}/{BACKEND_PATH}")
 
     from google.cloud import discoveryengine
