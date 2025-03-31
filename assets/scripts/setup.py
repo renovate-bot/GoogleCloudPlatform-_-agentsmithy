@@ -389,7 +389,6 @@ if __name__ == "__main__":
     #    exit(1)
 
     clone(REPOSITORY_URL, REPOSITORY_BRANCH)
-    stop
     install_poetry_dependencies(f"{REPOSITORY_NAME}/{BACKEND_PATH}")
 
     from google.cloud import discoveryengine
