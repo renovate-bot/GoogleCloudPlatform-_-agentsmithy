@@ -48,7 +48,7 @@ steps:
       - "1"
       - "--no-cpu-throttling"
       - "--cpu"
-      - "4"
+      - "2"
       - "--memory"
       - "4Gi"
       - "--concurrency"

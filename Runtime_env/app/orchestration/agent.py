@@ -254,8 +254,8 @@ class LangChainPrebuiltAgentManager(BaseAgentManager):
         try:
             async for chunk in self.agent_executor.astream(
                 {
-                    "input": input["messages"][0],
-                    "chat_history": input["messages"][1:],
+                    "input": input["messages"][-1],
+                    "chat_history": input["messages"][:-1],
                 }
             ):
                 # Organize response object to be consistent with other Agents (e.g. Agent Engine)
