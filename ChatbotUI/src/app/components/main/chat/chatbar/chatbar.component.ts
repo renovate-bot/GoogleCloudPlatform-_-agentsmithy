@@ -300,56 +300,21 @@ export class ChatbarComponent implements OnDestroy {
     this.loaderIndex++;
   }
 
+  removeUnpairedTripleBackticks(text: string): string {
+    const matches: RegExpMatchArray[] = Array.from(text.matchAll(/```/g));
+
+    // If there are an odd number of triple backtick occurrences, remove the last one
+    if (matches.length % 2 !== 0) {
+      if (matches.length > 0) { // Check if there are any matches before trying to remove
+        const start_index: number = matches[matches.length - 1].index!; // Non-null assertion because we know it exists
+        text = text.substring(0, start_index) + text.substring(start_index + 3);
+      }
+    }
+
+    return text;
+  }
+
   handleBotResponse(answer: string) {
-    // let events: string[] = answer.split("\n");
-    // console.log(events)
-    // events.pop();
-
-    // let parsedEvent = JSON.parse(events[0]);
-    // let answerId = parsedEvent.agent.messages[0].kwargs.id; // Access the "id" from the kwargs
-
-    // if ( answerId === this.conversation[0].chat_id) {
-    //   let lastEventParsed = JSON.parse(events.slice(-1)[0]);
-    //   // Access the content from the kwargs of the last event's message
-    //   let lastMessage = lastEventParsed.agent.messages.slice(-1)[0];
-
-    //   if(lastMessage.kwargs.type === "ai") { // Check if it is an aimessage
-    //     this.conversation[0].botAnswer += lastMessage.kwargs.content;
-    //   }
-    //   return;
-    // }
-
-    // let response: Chat = {
-    //   id: answerId,
-    //   question: this.chatQuery,
-    //   answer: "",
-    //   suggested_questions: []
-    // }
-    
-    // let endTime = new Date().getTime();
-    // this.assignId(response?.id);
-
-    // let singleMesage: Message = {
-    //   body: "",
-    //   botAnswer: response.answer,
-    //   type: 'bot',
-    //   responseTime: ((endTime - this.botStartTime) / 1000).toString(),
-    //   shareable: true,
-    //   botStartTime: this.botStartTime.toString(),
-    //   extras: {
-    //     like: false,
-    //     dislike: false,
-    //     delete: false,
-    //   },
-    //   chat_id: response.id!
-    // };
-
-    // this.conversation.unshift(singleMesage);
-    // this.setSuggestedQuestionInChat(response, endTime);
-    // this.showLoader = false;
-    // this.clearTimeoutForLoaderText();
-    // this.isSuggestedQuestion = '';
-
     let events: string[] = answer.split("\n");
 
     // Filter out empty strings that might result from extra newlines.
@@ -375,7 +340,7 @@ export class ChatbarComponent implements OnDestroy {
             const lastMessage = lastEventParsed.agent.messages.at(-1);
 
             if (lastMessage && lastMessage.kwargs.type === "ai") {
-                this.conversation[0].botAnswer += lastMessage.kwargs.content;
+                this.conversation[0].botAnswer += this.removeUnpairedTripleBackticks(lastMessage.kwargs.content);
             }
             return;
         }

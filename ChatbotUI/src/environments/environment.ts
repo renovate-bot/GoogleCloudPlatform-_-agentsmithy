@@ -19,16 +19,16 @@ let chatbotName: string;
 
 switch (env) {
   case 'prod':
-    backendURL = "https://your-production-backend.com/"; // Replace with your production URL
-    chatbotName = "your-production-chatbot-name"; // Replace with your production chatbot name
+    backendURL = "https://agentsmithy-starter-agent-backend-qtv4myxuwa-uc.a.run.app/"; // Replace with your production URL
+    chatbotName = "agentsmithy-starter-agent"; // Replace with your production chatbot name
     break;
   case 'stage':
-    backendURL = "https://your-staging-backend.com/"; // Replace with your staging URL
-    chatbotName = "your-staging-chatbot-name"; // Replace with your staging chatbot name
+    backendURL = "https://agentsmithy-starter-agent-backend-qtv4myxuwa-uc.a.run.app/"; // Replace with your staging URL
+    chatbotName = "agentsmithy-starter-agent"; // Replace with your staging chatbot name
     break;
   case 'dev':
   default:
-    backendURL = "http://localhost:8000/";
+    backendURL = "https://agentsmithy-starter-agent-backend-qtv4myxuwa-uc.a.run.app/";
     chatbotName = "agentsmithy-starter-agent";
     break;
 }
