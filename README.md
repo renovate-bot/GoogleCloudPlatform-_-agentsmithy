@@ -14,7 +14,6 @@ Below is a list of the options that AgentSmithy currently supports:
 - LangChain
 - LangGraph
 - LlamaIndex
-- Vertex AI Agent Framework (coming soon)
 
 **AGENT FOUNDATION MODELS:**
 - Gemini 2.0 Pro (Experiment v02-05)
