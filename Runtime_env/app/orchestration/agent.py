@@ -18,25 +18,24 @@ from typing import AsyncGenerator, Generator, Dict, Any, Optional
 import uuid
 
 from google.adk.agents import Agent
-from google.adk.sessions import InMemorySessionService, VertexAiSessionService
-from google.adk.runners import Runner
-from google.genai import types
-
+from google.adk.models.lite_llm import LiteLlm
 from google.api_core import exceptions
 from langchain.agents import (
     AgentExecutor,
-    create_react_agent as langchain_create_react_agent
+    create_tool_calling_agent
 )
-from langchain_core.messages import  AIMessage
+from langchain_core.messages import  AIMessage, HumanMessage
 from langchain_google_vertexai import ChatVertexAI
 from langchain_google_vertexai.model_garden import ChatAnthropicVertex
 from langgraph.prebuilt import create_react_agent as langgraph_create_react_agent
-from vertexai.preview import reasoning_engines # TODO: update this when it becomes agent engine
+from vertexai.preview import reasoning_engines # TODO: update this when it gets named agent_engines
 
 # LlamaIndex
 from llama_index.core import Settings
 from llama_index.core.agent import ReActAgent
+# from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.llms.langchain import LangChainLLM
+# from llama_index.llms.vertex import Vertex
 
 from app.orchestration.constants import GEMINI_FLASH_20_LATEST
 from app.orchestration.enums import OrchestrationFramework
@@ -158,6 +157,17 @@ class BaseAgentManager(ABC):
                     top_k=self.top_k,
                     verbose=self.verbose
                 )
+            elif "llama-4" in self.model_name:
+                return ChatVertexAI(
+                    model_name=self.model_name,
+                    location="us-east5", # llama-4 is currently only available in us-east5
+                    max_retries=self.max_retries,
+                    max_output_tokens=self.max_output_tokens,
+                    temperature=self.temperature,
+                    top_p=self.top_p,
+                    top_k=self.top_k,
+                    verbose=self.verbose
+                )
             else:
                 return ChatVertexAI(
                     model_name=self.model_name,
@@ -193,8 +203,6 @@ class GoogleAdkAgentManager(BaseAgentManager):
     AgentManager subclass for Google ADK orchestration.
     """
 
-    USER_ID = "dummy_user_id"
-
     def __init__(
         self,
         prompt: str,
@@ -210,15 +218,13 @@ class GoogleAdkAgentManager(BaseAgentManager):
         return_steps: Optional[bool] = False,
         verbose: Optional[bool] = True
     ):
-        # TODO: use Vertex AI Session Service for Agent Engine deployment
-        self.app_name = "adk_agent_runner"
-        self.session_service = InMemorySessionService()
+        self.user_id = "test_user_id"
 
         super().__init__(
             prompt=prompt,
             industry_type=industry_type,
             location=location,
-            orchestration_framework=OrchestrationFramework.VERTEX_AI_AGENT_FRAMEWORK_AGENT.value,
+            orchestration_framework=OrchestrationFramework.AGENT_DEVELOPMENT_KIT_AGENT.value,
             agent_engine_resource_id=agent_engine_resource_id,
             model_name=model_name,
             max_retries=max_retries,
@@ -230,10 +236,14 @@ class GoogleAdkAgentManager(BaseAgentManager):
             verbose=verbose
         )
 
+
     def create_agent_executor(self):
         """
         Creates a ADK Agent executor.
         """
+        # If agent_engine_resource_id is provided, use the deployed Agent Engine
+        if self.agent_engine_resource_id:
+            return reasoning_engines.ReasoningEngine(self.agent_engine_resource_id)
 
         tool_names = []
         tool_desc = []
@@ -249,82 +259,66 @@ class GoogleAdkAgentManager(BaseAgentManager):
 
         prompt = self.prompt.format(tool_names=tool_names, tool_desc=tool_desc)
 
-        root_agent = Agent(
+        adk_agent = Agent(
             name="assistant_agent",
-            model=self.model_name,
+            model=LiteLlm(model=self.model_name),
+            # model=self.model_obj,
             instruction=prompt,
-            tools=self.tools,
+            tools=self.tools
         )
+        return reasoning_engines.AdkApp(agent=adk_agent) #, enable_tracing=True)
 
-        runner = Runner(
-            agent=root_agent,
-            app_name=self.app_name,
-            session_service=self.session_service,
-        )
 
-        return runner
+    def get_response_obj(
+        self,
+        content: str,
+        run_id: str
+    ) -> Dict:
+        """Returns a structure dictionary response object.
+        The response object needs to be organized to be
+        consistent with other Agents (e.g. Agent Engine)
+
+        Args:
+            content: The string reponse from the LLM.
+            run_id: The run_id.
+
+        Returns:
+            Structured dictionary reponse object.
+        """
+        response_obj = {
+            "agent": {
+                "messages": [
+                    {
+                        "lc": 1,
+                        "type": "constructor",
+                        "id": ["adk", "schema", "messages", "AIMessage"],
+                        "kwargs": {
+                            "content": content,
+                            "type": "ai",
+                            "tool_calls": [],
+                            "invalid_tool_calls": [],
+                            "id": run_id
+                        },
+                    }
+                ]
+            }
+        }
+        return response_obj
+
 
     async def astream(
         self,
         input: Dict[str, Any],
     ) -> AsyncGenerator[Dict, Any]:
         """Asynchronously event streams the Agent output."""
-        query = input["messages"][-1]["content"]
-        message = types.Content(role='user', parts=[types.Part(text=query)])
-
+        # Convert the messages into a string
+        content = "\n".join(f"[{msg['type']}]: {msg['content']}" for msg in input["messages"])
         try:
-            # check if session exists, if not, create one
-            session = None
-            try:
-                session = self.session_service.get_session(
-                    app_name=self.app_name,
-                    user_id=self.USER_ID,
-                    session_id=input["session_id"]
+            for chunk in self.agent_executor.stream_query(message=content, user_id=self.user_id):
+                yield self.get_response_obj(
+                    content=chunk["content"]["parts"][0]["text"],
+                    run_id=input["run_id"]
                 )
-            finally:
-                if not session:
-                    self.session_service.create_session(
-                        app_name=self.app_name,
-                        user_id=self.USER_ID,
-                        session_id=input["session_id"]
-                    )
-
-            async for event in self.agent_executor.run_async(
-                    user_id=self.USER_ID,
-                    session_id=input["session_id"],
-                    new_message=message,
-            ):
-                # Events can be of various types (e.g., tool calls, intermediate steps).
-                # We are interested in events that contain text content from the agent.
-                if event.content and event.content.parts:
-                    for part in event.content.parts:
-                        if part.text:
-                            response_obj = {
-                                "agent": {
-                                    "output": part.text,
-                                    "messages": [
-                                        {
-                                            "lc": 1,
-                                            "type": "constructor",
-                                            "id": ["langchain", "schema",
-                                                   "messages", "AIMessage"],
-                                            "kwargs": {
-                                                "content": part.text,
-                                                "type": "ai",
-                                                "tool_calls": [],
-                                                "invalid_tool_calls": [],
-                                                "id": input["run_id"]
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                            yield response_obj
-
-                # Check if this event marks the completion of the agent's turn
-                if event.is_final_response():
-                    # [End of Agent Turn]
-                    break
         except Exception as e:
             raise RuntimeError(f"Unexpected error. {e}") from e
 
@@ -369,13 +363,13 @@ class LangChainPrebuiltAgentManager(BaseAgentManager):
         """
         Creates a Langchain React Agent executor.
         """
-        react_agent = langchain_create_react_agent(
+        agent = create_tool_calling_agent(
             prompt=self.prompt,
             llm=self.model_obj,
             tools=self.tools,
         )
         return AgentExecutor(
-            agent=react_agent,
+            agent=agent,
             tools=self.tools,
             return_intermediate_steps=self.return_steps,
             verbose=self.verbose
@@ -398,10 +392,16 @@ class LangChainPrebuiltAgentManager(BaseAgentManager):
             An error is encountered during streaming.
         """
         try:
+            input_text = input["messages"][-1]["content"]
+            chat_history = [
+                HumanMessage(content=msg["content"]) if msg["type"] == "human"
+                else AIMessage(content=msg["content"])
+                for msg in input["messages"][:-1]
+            ]
             async for chunk in self.agent_executor.astream(
                 {
-                    "input": input["messages"][-1],
-                    "chat_history": input["messages"][:-1],
+                    "input": input_text,
+                    "chat_history": chat_history,
                 }
             ):
                 # Organize response object to be consistent with other Agents (e.g. Agent Engine)
@@ -750,10 +750,18 @@ class LlamaIndexAgentManager(BaseAgentManager):
         Settings.llm = LangChainLLM(self.model_obj)
         llamaindex_agent = ReActAgent.from_tools(
             prompt=self.prompt,
-            llm = LangChainLLM(self.model_obj),
+            llm=LangChainLLM(self.model_obj),
             tools=self.tools,
             verbose=self.verbose
         )
+        # llamaindex_agent = FunctionAgent(
+        #     system_prompt=self.prompt,
+        #     # llm=LangChainLLM(self.model_obj),
+        #     llm=Vertex(model=self.model_name),
+        #     # llm=self.model_obj,
+        #     tools=self.tools,
+        #     # verbose=self.verbose
+        # )
         return llamaindex_agent
 
 

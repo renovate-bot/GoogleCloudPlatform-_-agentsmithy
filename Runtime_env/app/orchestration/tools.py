@@ -177,11 +177,11 @@ def get_tools(
             google_finance_tool
         ])
     # The Vertex AI Search Tool is only used if the user specifies a DATA_STORE_ID
-    if DATA_STORE_ID != "unset" and orchestration_framework != OrchestrationFramework.VERTEX_AI_AGENT_FRAMEWORK_AGENT.value:
+    if DATA_STORE_ID != "unset" and orchestration_framework != OrchestrationFramework.AGENT_DEVELOPMENT_KIT_AGENT.value:
         tools_list.append(retrieve_info)
 
     # ADK agent currently does not support multiple tool including ADK built-in tool
-    if orchestration_framework != OrchestrationFramework.VERTEX_AI_AGENT_FRAMEWORK_AGENT.value:
+    if orchestration_framework != OrchestrationFramework.AGENT_DEVELOPMENT_KIT_AGENT.value:
         tools_list.extend([
             # fallback,
             should_continue
@@ -192,7 +192,7 @@ def get_tools(
         orchestration_framework == OrchestrationFramework.LANGGRAPH_PREBUILT_AGENT.value):
         tools_list = [StructuredTool.from_function(tool) for tool in tools_list]
 
-    elif orchestration_framework == OrchestrationFramework.VERTEX_AI_AGENT_FRAMEWORK_AGENT.value:
+    elif orchestration_framework == OrchestrationFramework.AGENT_DEVELOPMENT_KIT_AGENT.value:
         if DATA_STORE_ID != "unset":
             vais_tool = VertexAiSearchTool(
                 data_store_id=f"projects/{PROJECT_ID}/locations/{AGENT_BUILDER_LOCATION}/collections/default_collection/dataStores/{DATA_STORE_ID}"

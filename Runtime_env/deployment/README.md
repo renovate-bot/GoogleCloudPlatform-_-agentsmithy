@@ -36,6 +36,9 @@ The application leverages [**Terraform**](http://terraform.io) to define and pro
    | FRONTEND_URL                           | The URL of frontend Cloud Run service. Used for CORS policy setting. |   No     |
    | GCS_STAGING_BUCKET                     | The name of the Staging bucket for Vertex AI resources.              |   No     |
    | DATA_STORE_ID                          | The ID of the Vertex AI Search Datastore                             |   No     |
+   | GOOGLE_GENAI_USE_VERTEXAI              | Boolean value (set to "TRUE" if using ADK)                           |   No     |
+   | GOOGLE_CLOUD_PROJECT                   | Google Cloud Project ID for resource deployment. (Used by ADK)       |   No     |
+   | GOOGLE_CLOUD_LOCATION                  | The region to use for the various resources. (Used by ADK)           |   No     |
 
    - Options:
 
@@ -54,14 +57,19 @@ The application leverages [**Terraform**](http://terraform.io) to define and pro
       - "langgraph_prebuilt_agent"
       - "langgraph_vertex_ai_agent_engine_agent" # use if using Agent Engine deployment
       - "llamaindex_agent"  # can use with either Agent Engine or Cloud Run deployment
+      - "agent_development_kit_agent"  # can use with either Agent Engine or Cloud Run deployment"
 
       AGENT_FOUNDATION_MODEL:
-      - "gemini-2.0-pro-exp-02-05"
+      - "gemini-2.5-pro"
+      - "gemini-2.5-flash"
+      - "gemini-2.5-flash-lite"
       - "gemini-2.0-flash"
       - "gemini-1.5-pro"
       - "gemini-1.5-flash"
       - "claude-3-7-sonnet" # requires permission / signing T&C; must be us-east5
       - "claude-3-5-sonnet-v2" # requires permission / signing T&C; must be us-east5
+      - "llama-4-maverick-17b-128e-instruct-maas" # requires the model to be enabled
+      - "llama-4-scout-17b-16e-instruct-maas" # requires the model to be enabled
       - "llama-3.3-70b-instruct-maas" # requires the model to be enabled
       - "llama-3.1-405b-instruct-maas" # requires the model to be enabled
 
@@ -79,6 +87,12 @@ The application leverages [**Terraform**](http://terraform.io) to define and pro
 
    - If you want your agent runtime to use an Agent Engine deployment, specify this using the `AGENT_ENGINE_RESOURCE_ID` variable shown below. Do not define this variable if you do not want to use Agent Engine. Example:
    `AGENT_ENGINE_RESOURCE_ID: projects/599247973214/locations/us-central1/reasoningEngines/5008011581729013760`
+
+   - If you want to use Agent Development Kit as your orchestration framework, specify this using the `GOOGLE_GENAI_USE_VERTEXAI`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` variables shown below. Example:
+
+    GOOGLE_GENAI_USE_VERTEXAI: 'TRUE'
+    GOOGLE_CLOUD_PROJECT: next-2024-industry-demos
+    GOOGLE_CLOUD_LOCATION: us-central1
 
 2. **Run Cloud Build Job**
 

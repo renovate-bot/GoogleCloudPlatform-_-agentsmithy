@@ -255,7 +255,7 @@ def run_agent_engine_deployment() -> str:
             AGENT_NAME,
             AGENT_DESCRIPTION
         )
-    elif AGENT_ORCHESTRATION_FRAMEWORK == "vertex_ai_agent_framework_agent":
+    elif AGENT_ORCHESTRATION_FRAMEWORK == "agent_development_kit_agent":
         remote_agent = deploy_agent_to_agent_engine(
             agent_manager.agent_executor.agent,
             AGENT_NAME,
