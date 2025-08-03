@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# pylint: disable=C0301, W0107, W0107, W0622, R0917
+# pylint: disable=C0301, W0107, W0107, W0622, R0917, W0718
 """Module used to define and interact with agent orchestrators."""
 from abc import ABC, abstractmethod
 from typing import AsyncGenerator, Generator, Dict, Any, Optional
