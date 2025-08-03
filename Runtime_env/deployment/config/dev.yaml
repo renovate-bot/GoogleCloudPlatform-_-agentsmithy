@@ -7,7 +7,10 @@ AGENT_ORCHESTRATION_FRAMEWORK: langgraph_prebuilt_agent
 AGENT_FOUNDATION_MODEL: gemini-2.0-flash
 USER_AGENT: agentsmithy-starter-agent
 AGENT_DESCRIPTION: "This is a test agent"
-
+# Required for ADK agent; unused if not using ADK
+GOOGLE_GENAI_USE_VERTEXAI: "TRUE"
+GOOGLE_CLOUD_PROJECT: next-2024-industry-demos
+GOOGLE_CLOUD_LOCATION: us-central1
 
 # These env vars will be set for you by build.py
 FRONTEND_URL: 

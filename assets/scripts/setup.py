@@ -258,6 +258,13 @@ def run_agent_engine_deployment() -> str:
             AGENT_DESCRIPTION
         )
 
+    elif AGENT_ORCHESTRATION_FRAMEWORK == "agent_development_kit_agent":
+        remote_agent = deploy_agent_to_agent_engine(
+            agent_manager.agent_executor.agent,
+            AGENT_NAME,
+            AGENT_DESCRIPTION
+        )
+
     if not remote_agent.resource_name:
         raise Exception("Error deploying Agent to Agent Engine.")
 
@@ -341,6 +348,9 @@ def configure_backend(
     search_and_replace_file(config_file, r"AGENT_FOUNDATION_MODEL:\s(.*?)*\n", f"AGENT_FOUNDATION_MODEL: {agent_foundation_model}\n")
     search_and_replace_file(config_file, r"USER_AGENT:\s(.*?)*\n", f"USER_AGENT: {agent_name}\n")
     search_and_replace_file(config_file, r"AGENT_DESCRIPTION:\s(.*?)*\n", f"AGENT_DESCRIPTION: {agent_description}\n")
+    search_and_replace_file(config_file, r"GOOGLE_GENAI_USE_VERTEXAI:\s(.*?)*\n", """GOOGLE_GENAI_USE_VERTEXAI: "TRUE"\n""")
+    search_and_replace_file(config_file, r"GOOGLE_CLOUD_PROJECT:\s(.*?)*\n", f"GOOGLE_CLOUD_PROJECT: {project_id}\n")
+    search_and_replace_file(config_file, r"GOOGLE_CLOUD_LOCATION:\s(.*?)*\n", f"GOOGLE_CLOUD_LOCATION: {region}\n")
 
 def configure_frontend(agent_name: str, backend_url: str, env_tag: str, config_file: str):
     search_and_replace_file(config_file, r"const env: string = \"(.*?)\"", f'const env: string = "{env_tag}"')

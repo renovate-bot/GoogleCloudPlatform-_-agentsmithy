@@ -13,14 +13,15 @@
 # limitations under the License.
 # pylint: disable=C0301
 """Module that contains various utility functions."""
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.orchestration.agent import (
     LangChainPrebuiltAgentManager,
     LangGraphPrebuiltAgentManager,
     LangChainVertexAIAgentEngineAgentManager,
     LangGraphVertexAIAgentEngineAgentManager,
-    LlamaIndexAgentManager
+    LlamaIndexAgentManager,
+    GoogleAdkAgentManager
 )
 from app.orchestration.constants import (
     FINANCE_AGENT_DESCRIPTION,
@@ -50,41 +51,51 @@ def get_init_prompt(
         sys_desc = DEFAULT_AGENT_DESCRIPTION
 
     # The prebuilt langchain option is older and has a different prompt structure
+    # if agent_orchestration_framework == OrchestrationFramework.LANGCHAIN_PREBUILT_AGENT.value:
+    #     return PromptTemplate.from_template(sys_desc + """You have access to the following tools:
+
+    #     TOOLS:
+    #     ------
+
+    #     Assistant has access to the following tools:
+
+    #     {tools}
+
+    #     To use a tool, please use the following format:
+
+    #     ```
+    #     Thought: Do I need to use a tool? Yes
+    #     Action: the action to take, should be one of [{tool_names}]
+    #     Action Input: the input to the action
+    #     Observation: the result of the action
+    #     ```
+
+    #     When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
+
+    #     ```
+    #     Thought: Do I need to use a tool? No
+    #     Final Answer: [your response here]
+    #     ```
+
+    #     Begin!
+
+    #     Previous conversation history:
+    #     {chat_history}
+
+    #     New input: {input}
+    #     {agent_scratchpad}""")
+
     if agent_orchestration_framework == OrchestrationFramework.LANGCHAIN_PREBUILT_AGENT.value:
-        return PromptTemplate.from_template(sys_desc + """You have access to the following tools:
-                         
-        TOOLS:
-        ------
+        return ChatPromptTemplate.from_messages(
+            [
+                ("system", sys_desc),
+                MessagesPlaceholder(variable_name="chat_history"),
+                ("human", "{input}"),
+                MessagesPlaceholder(variable_name="agent_scratchpad"),
+            ]
+        )
 
-        Assistant has access to the following tools:
-
-        {tools}
-
-        To use a tool, please use the following format:
-
-        ```
-        Thought: Do I need to use a tool? Yes
-        Action: the action to take, should be one of [{tool_names}]
-        Action Input: the input to the action
-        Observation: the result of the action
-        ```
-
-        When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
-
-        ```
-        Thought: Do I need to use a tool? No
-        Final Answer: [your response here]
-        ```
-
-        Begin!
-
-        Previous conversation history:
-        {chat_history}
-
-        New input: {input}
-        {agent_scratchpad}""")
-
-    elif agent_orchestration_framework ==OrchestrationFramework.LLAMAINDEX_AGENT.value:
+    elif agent_orchestration_framework == OrchestrationFramework.LLAMAINDEX_AGENT.value:
         return sys_desc + """You are designed to help with a variety of tasks, from answering questions to providing summaries to other types of analyses.
         When you respond, do not respond with backticks (e.g. ```). Remove these from your response.
 
@@ -136,9 +147,31 @@ def get_init_prompt(
         Below is the current conversation consisting of interleaving human and assistant messages.
         """
 
+    elif agent_orchestration_framework == OrchestrationFramework.AGENT_DEVELOPMENT_KIT_AGENT.value:
+        return sys_desc + """You are designed to help with a variety of tasks, from answering questions to providing summaries to other types of analyses.
+        When you respond, do not respond with backticks (e.g. ```). Remove these from your response.
+
+        ## Tools
+
+        You have access to a wide variety of tools. You are responsible for using the tools in any sequence you deem appropriate to complete the task at hand.
+        This may require breaking the task into subtasks and using different tools to complete each subtask.
+
+        You have access to the following tools:
+        {tool_desc}
+
+
+        ## Output Format
+
+        Please answer in the same language as the question and use the following format.
+
+        NEVER surround your response with markdown code markers. You may use code markers within your response if you need to.
+
+        Please use a valid JSON format for the Action Input. Do NOT do this {{\'input\': \'hello world\', \'num_beams\': 5}}.
+        """
+
     else:
         return ChatPromptTemplate.from_messages([
-            ("system", f"{sys_desc}"),
+            ("system", sys_desc),
             ("placeholder", "{messages}")
         ])
 
@@ -184,6 +217,13 @@ def get_agent_from_config(
         )
     elif agent_orchestration_framework == OrchestrationFramework.LLAMAINDEX_AGENT.value:
         agent_manager = LlamaIndexAgentManager(
+            prompt=init_prompt,
+            industry_type=industry_type,
+            model_name=agent_foundation_model,
+            agent_engine_resource_id=agent_engine_resource_id
+        )
+    elif agent_orchestration_framework == OrchestrationFramework.AGENT_DEVELOPMENT_KIT_AGENT.value:
+        agent_manager = GoogleAdkAgentManager(
             prompt=init_prompt,
             industry_type=industry_type,
             model_name=agent_foundation_model,

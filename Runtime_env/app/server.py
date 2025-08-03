@@ -51,7 +51,7 @@ def configure_cors(app):
     if os.getenv("FRONTEND_URL"):
         urls.append(os.getenv("FRONTEND_URL"))
 
-    # urls = ["*"]
+    urls = ["*"]
 
     app.add_middleware(
         CORSMiddleware,

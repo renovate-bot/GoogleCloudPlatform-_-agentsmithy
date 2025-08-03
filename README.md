@@ -14,14 +14,20 @@ Below is a list of the options that AgentSmithy currently supports:
 - LangChain
 - LangGraph
 - LlamaIndex
+- Agent Development Kit (ADK) [Coming Soon]
 
 **AGENT FOUNDATION MODELS:**
-- Gemini 2.0 Pro (Experiment v02-05)
+- Gemini 2.5 Pro
+- Gemini 2.5 Flash
+- Gemini 2.5 Flash Lite
+- Gemini 2.0 Pro
 - Gemini 2.0 Flash
 - Gemini 1.5 Pro
 - Gemini 1.5 Flash
 - Claude 3.7 Sonnet
 - Claude 3.5 Sonnet v2
+- Llama 4 Maverick
+- Llama 4 Scout
 - Llama 3.3 70b-instruct-maas
 - Llama 3.1 405b-instruct-maas
 
@@ -134,14 +140,20 @@ AgentSmithy uses env vars defined in [Runtime_env/deployment/config/dev.yaml](Ru
 - "langgraph_prebuilt_agent"
 - "langgraph_vertex_ai_agent_engine_agent"    # use if using Agent Engine deployment e.g. `DEPLOY_TO_AGENT_ENGINE = True` in build.py
 - "llamaindex_agent"                          # can use with either Agent Engine or Cloud Run deployment
+- "agent_development_kit_agent"           # can use with either Agent Engine or Cloud Run deployment
 
 **AGENT_FOUNDATION_MODEL:**
-- "gemini-2.0-pro-exp-02-05"
+- "gemini-2.5-pro"
+- "gemini-2.5-flash"
+- "gemini-2.5-flash-lite"
+- "gemini-2.0-pro"
 - "gemini-2.0-flash"
 - "gemini-1.5-pro"
 - "gemini-1.5-flash"
 - "claude-3-7-sonnet"             # requires permission / signing T&C
 - "claude-3-5-sonnet-v2"          # requires permission / signing T&C
+- "llama-4-maverick-17b-128e-instruct-maas"   # requires the model to be enabled
+- "llama-4-scout-17b-16e-instruct-maas"   # requires the model to be enabled
 - "llama-3.3-70b-instruct-maas"   # requires the model to be enabled
 - "llama-3.1-405b-instruct-maas"  # requires the model to be enabled
 
@@ -309,7 +321,20 @@ AI agents leverage foundation models, to process information, reason, and intera
 - **Action Execution:** AI agents can use foundation models to generate instructions or commands that control their actions. 
 - **Tool Calling:** AI agents can leverage tool calling capabilities to access external tools and APIs to perform tasks that the foundation model alone cannot handle, such as accessing databases, performing calculations, or making web requests.
 
-1. **Gemini 2.0 Flash:** A rapid and efficient model ideal for quick tasks and high-throughput applications where cost is a primary concern.
+1. **Gemini 2.5 Pro:** Gemini 2.5 Pro is a powerful, multimodal AI model that brings a breakthrough long-context window. It excels at deeply understanding and reasoning over vast amounts of information, including text, images, audio, and video, up to 1 million tokens. This makes it ideal for complex tasks like analyzing large codebases, summarizing lengthy documents, and processing detailed user histories.
+    - **Pros:** Exceptional long-context understanding, strong reasoning capabilities, multimodal input support, excellent for complex analysis and summarization.
+    - **Cons:** Can be more resource-intensive and potentially slower for simpler tasks compared to \'Flash\' models.
+
+
+2. **Gemini 2.5 Flash:** Gemini 2.5 Flash is a lightweight and highly efficient AI model designed for speed and cost-effectiveness. It\'s optimized for tasks requiring fast responses and high throughput, such as real-time chat, content summarization, and simple question answering. It still benefits from a large context window, making it a strong contender for many general-purpose applications.
+    - **Pros:** Fast, cost-efficient, good for high-volume tasks, strong performance with a large context window for its size.
+    - **Cons:** May not match the depth of reasoning or complexity handling of \'Pro\' models for highly intricate tasks.
+
+3. **Gemini 2.5 Lite:** Gemini 2.5 Flash Lite is an even more streamlined and cost-optimized version of Gemini Flash. It\'s engineered for extreme efficiency, making it perfect for embedded applications, mobile devices, or scenarios where latency and resource usage are critical. It handles core conversational tasks, simple data extraction, and quick information retrieval with remarkable speed and minimal overhead.
+    - **Pros:** Extremely fast and low-cost, ideal for resource-constrained environments and high-frequency interactions, efficient for basic tasks.
+    - **Cons:** Limited reasoning complexity and context window compared to Pro and standard Flash models, less suitable for nuanced understanding or complex analysis.
+
+4. **Gemini 2.0 Flash:** A rapid and efficient model ideal for quick tasks and high-throughput applications where cost is a primary concern.
 
     - **Strengths:** Speed, Efficiency, Cost-effectiveness. Strong general knowledge.
     - **Best For:**
@@ -319,7 +344,7 @@ AI agents leverage foundation models, to process information, reason, and intera
         - **Tool Use for API Calls:** Acting as the "translator" to turn natural language into API requests for external tools.
     - **Example Scenario:** You're building a customer service chatbot that needs to provide quick answers to frequently asked questions. You need high throughput and low latency, and don't want to pay a fortune per request. The goal is to quickly resolve common issues and reduce the workload on human agents.
 
-2. **Gemini 1.5 Pro:** A powerful model with a massive context window, enabling complex reasoning and analysis of large datasets.
+5. **Gemini 1.5 Pro:** A powerful model with a massive context window, enabling complex reasoning and analysis of large datasets.
 
     - **Strengths:** Huge Context Window (millions of tokens), Strong Reasoning, Multimodal Capabilities, Good General Knowledge.
     - **Best For:**
@@ -329,7 +354,7 @@ AI agents leverage foundation models, to process information, reason, and intera
         - **Memory and State Maintenance:** Remembering past interactions and using that information to inform future responses.
     - **Example Scenario:** You're creating a research assistant that needs to analyze large volumes of documents (e.g., legal contracts, scientific papers, financial reports) to extract key insights, identify trends, and answer complex questions. The agent needs to maintain context across the entire document collection and perform sophisticated reasoning.
 
-3. **Claude 3.7 Sonnet (Model Garden):** Anthropic's most intelligent model to date and the first Claude model to offer extended thinking—the ability to solve complex problems with careful, step-by-step reasoning. Claude 3.7 Sonnet balances speed and quality by choosing between standard thinking for near-instant responses or extended thinking for advanced reasoning.
+6. **Claude 3.7 Sonnet (Model Garden):** Anthropic's most intelligent model to date and the first Claude model to offer extended thinking—the ability to solve complex problems with careful, step-by-step reasoning. Claude 3.7 Sonnet balances speed and quality by choosing between standard thinking for near-instant responses or extended thinking for advanced reasoning.
 
     - **Strengths:** Strong natural language understanding, conversational capabilities, creative writing, excellent safety/alignment
     - **Best For:**
@@ -339,7 +364,7 @@ AI agents leverage foundation models, to process information, reason, and intera
         - **Content generation and analysis:** Excels at writing and is able to understand nuance and tone in content to generate more compelling content and analyze content on a deeper level.
     - **Example Scenario:** You're developing a writing assistant or a social media manager that needs to generate engaging and creative content (e.g., blog posts, marketing copy, social media updates). The agent needs to produce high-quality, human-like text that aligns with your brand voice.
 
-4. **Claude 3.5 Sonnet v2 (Model Garden):** A state-of-the-art model for real-world software engineering tasks and agentic capabilities
+7. **Claude 3.5 Sonnet v2 (Model Garden):** A state-of-the-art model for real-world software engineering tasks and agentic capabilities
 
     - **Strengths:** Strong natural language understanding, conversational capabilities, creative writing, excellent safety/alignment
     - **Best For:**
@@ -349,7 +374,7 @@ AI agents leverage foundation models, to process information, reason, and intera
         - **Content generation and analysis:** Can understand nuance and tone in content, generating compelling content and analyzing content on a deeper level.
     - **Example Scenario:** You are building a conversational AI system for customer support, or a general purpose chatbot and you need a response that balances creative abilities with the speed necessary for a fluid conversation.
 
-5. **Llama 3.3 70B (Model Garden):** An open-source, customizable model with strong performance and broad applicability, enabling fine-tuning for specific tasks.
+8. **Llama 3.3 70B (Model Garden):** An open-source, customizable model with strong performance and broad applicability, enabling fine-tuning for specific tasks.
 
     - **Strengths:** Open Source, Customizable (fine-tunable), Strong Performance, Broad Applicability. A good balance between size and capability.
     - **Best For:**
@@ -359,7 +384,7 @@ AI agents leverage foundation models, to process information, reason, and intera
         - **Rapid Prototyping and Experimentation:** Ideal for quickly testing AI concepts and developing proof-of-concepts due to its smaller size and faster training times.
     - **Example Scenario:** You have a specific domain or task where you want to optimize performance by fine-tuning a model on your own data. You also want control over the model's behavior and you're willing to invest the time and resources to fine-tune and maintain the model.
 
-6. **Llama 3.3 70B (Model Garden):** A massive open-source model for tackling the most challenging problems, requiring deep understanding and complex reasoning capabilities.
+9. **Llama 3.3 70B (Model Garden):** A massive open-source model for tackling the most challenging problems, requiring deep understanding and complex reasoning capabilities.
 
     - **Strengths:** Huge Capacity, High Potential for Complex Reasoning, Strong General Knowledge, Open Source, Customizable (fine-tunable)
     - **Best For:**
